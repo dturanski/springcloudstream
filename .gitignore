@@ -1,0 +1,8 @@
+.idea/
+*.pyc
+*.egg-info/
+MANIFEST
+build/
+dist/
+.DS_Store
+.eggs/
