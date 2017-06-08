@@ -19,9 +19,9 @@ import sys
 Python 2 or 3 agnostic input function
 '''
 
-PY3K = sys.version_info >= (3, 0)
+PYTHON3 = sys.version_info >= (3, 0)
 
-if PY3K:
+if PYTHON3:
     binary_input = sys.stdin.buffer
     receive_input = input
 else:

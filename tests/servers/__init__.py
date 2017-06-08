@@ -12,13 +12,4 @@ Copyright 2017 the original author or authors.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-"""
-import os
-from springcloudstream.tcp import Processor
-
-
-def upper(data):
-    return data.upper()
-
-
-Processor(port=9999, ping_port=9998, debug=True, buffer_size=1024).start(upper)
+"""  

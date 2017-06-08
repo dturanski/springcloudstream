@@ -45,7 +45,7 @@ class TestTcp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.process = subprocess.Popen(
-            'python tcp_upper.py', stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            'python servers/tcp_upper.py',
             shell=True, preexec_fn=os.setsid
         )
         time.sleep(1.0)
@@ -62,8 +62,9 @@ class TestTcp(unittest.TestCase):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((HOST, 9998))
-            sock.sendall("ping\n")
-            result = str(sock.recv(80))
+            sock.sendall("ping\n".encode('utf-8'))
+            result = sock.recv(80)
+            result = result.decode('utf-8')
             self.assertEqual('alive',result.rstrip())
         finally:
             sock.close()
@@ -77,10 +78,10 @@ class TestTcp(unittest.TestCase):
         try:
             sock.connect((HOST, PORT))
             # Connect to server and send data
-            # sendAndRecieve('hello\n')
-            self.sendAndRecieve(sock, random_data(100))
-            self.sendAndRecieve(sock, random_data(1025))
-            self.sendAndRecieve(sock, random_data(2048))
+            for i in range(10):
+                self.sendAndRecieve(sock, random_data(10))
+                self.sendAndRecieve(sock, random_data(1025))
+                self.sendAndRecieve(sock, random_data(2048))
 
         finally:
             sock.close()
@@ -91,20 +92,24 @@ class TestTcp(unittest.TestCase):
         try:
             # Connect to server and send data
             sock.connect((HOST, PORT))
-            sock.sendall("hello\nworld\n")
-            result = str(sock.recv(1024))
-            self.assertEqual('HELLO',result)
-            result = str(sock.recv(1024))
-            self.assertEqual('WORLD', result)
+            sock.sendall("hello\nworld\n".encode('utf-8'))
+            result = sock.recv(1024)
+            result = result.decode('utf-8')
+
+            self.assertEqual('HELLO',result.rstrip())
+            result = sock.recv(1024)
+            result = result.decode('utf-8')
+            self.assertEqual('WORLD', result.rstrip())
         finally:
             sock.close()
 
     def sendAndRecieve(self, sock, data):
-        sock.sendall(data)
+        sock.sendall(data.encode('utf-8'))
         # Receive data from the server and shut down
         # Different for Python 3
         # str(sock.recv(1024),"utf-8")
-        result =  str(sock.recv(len(data)))
-        self.assertEqual(data.upper().rstrip(), result)
+        result =  sock.recv(len(data))
+        result = result.decode('utf-8')
+        self.assertEqual(data.upper(), result)
 
 
