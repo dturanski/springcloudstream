@@ -34,7 +34,11 @@ skip_tests = os.environ.get('SKIP_TESTS', False)
 
 HOST, PORT = "localhost", 9999
 
+PYTHON3 = sys.version_info >= (3, 0)
 
+PY_COMMAND = 'python'
+if PYTHON3:
+    PY_COMMAND = 'python3'
 
 def random_data(size):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(size)) + '\n'
@@ -45,7 +49,7 @@ class TestTcp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.process = subprocess.Popen(
-            'python servers/tcp_upper.py',
+            '%s servers/tcp_upper.py' % PY_COMMAND,
             shell=True, preexec_fn=os.setsid
         )
         time.sleep(1.0)
