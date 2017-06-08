@@ -18,7 +18,6 @@ import sys
 '''
 Python 2 or 3 agnostic input function
 '''
-import sys
 
 PY3K = sys.version_info >= (3, 0)
 
