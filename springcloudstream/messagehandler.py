@@ -44,62 +44,75 @@ class MessageHandler:
         self.component_type = component_type
 
 
+
+
 class DefaultMessageHandler(MessageHandler):
     """
     Default Message Handler for str terminated by CR ('\n')
     """
 
-    def handle(self, request, received_data, buf, logger):
-        """
-        Handles a socket message.
+    def __init__(self, handler_function, component_type, char_encoding='utf-8'):
 
-        :param request: the request socket
-        :param received_data: accumulated data across multiple socket recvs
-        :param buf: the data for each socket recv invocation.
-        :param logger: the logger to use.
-        :return: updated received_data or None if the socket connection was terminated.
-        """
 
+    def __receive(self, request, buffer_size):
+        logger = self.logger
+        buf = bytearray(buffer_size)
+        received_data = bytearray()
+        receive_complete = False
+        data = None
         try:
-            nbytes = request.recv_into(buf, len(buf))
+            while not receive_complete:
+                nbytes = request.recv_into(buf, buffer_size)
+                if nbytes > 0:
+                    logger.debug("received %d bytes " % nbytes)
+                    received_data.extend(buf[:nbytes])
+                    receive_complete = (received_data.rfind(b'\n') == len(received_data) - 1)
+
+                    if receive_complete:
+                        data = received_data.decode(self.char_encoding)
+                        logger.debug('message received [%s]' % data)
+                else:
+                    break
+
+        except Exception:
+            logger.error("Error receiving message %s ", sys.exc_info())
+
+        return data
+
+    def __send(self, request, msg):
+        logger = self.logger
+
+        logger.debug("sending result [%s]" % msg)
+
+        if msg.find('\n') != len(msg) - 1:
+            msg += '\n'
+        try:
+            request.sendall(msg.encode(self.char_encoding))
+            logger.debug("data sent")
         except:
-            return None
+            logger.error("data not sent %s" % sys.exc_info()[0])
+            return False
+        return True
 
-        if nbytes > 0:
+    def handle(self, request, buffer_size):
+        """
+        Handle a message
+        :param request: the request socket.
+        :param buffer_size: the buffer size.
+        :return: True if success, False otherwise
+        """
+        logger = self.logger
 
-            logger.debug("received %d bytes" % nbytes)
-            received_data.extend(buf[:nbytes])
-
-            terminator_pos = received_data.find(b'\n')
-            logger.debug('terminator found @ [%d]' % terminator_pos)
-
-            '''
-            Handle multiple occurences of terminators in stream
-            '''
-            while terminator_pos != -1:
-                data = received_data[:terminator_pos].decode(self.char_encoding)
-                logger.debug("received [%s]" % data)
-                received_data = received_data[terminator_pos + 1:]
-
-                # invoke the handler function on the data
-                result = self.handler_function(data)
-
-                if self.component_type == 'Processor':
-                    logger.debug("sending result [%s]" % result)
-
-                    if result.find('\n') != len(result) - 1:
-                        result = result + '\n'
-                    try:
-                        request.sendall(result.encode(self.char_encoding))
-                        logger.debug("data sent")
-                    except:
-                        logger.error("data not sent %s" % sys.exc_info()[0])
-                        return None
-
-                terminator_pos = received_data.find(b'\n')
-            return received_data
+        data = self.__receive(request, buffer_size)
+        if data is None:
+            return False
         else:
-            return None
+            for message in data.split('\n')[:-1]:
+                result = self.handler_function(message)
+                if self.component_type == 'Processor':
+                    if not self.__send(request, result):
+                        return False
+        return True
 
 
 class StxEtxHandler(MessageHandler):
@@ -108,8 +121,71 @@ class StxEtxHandler(MessageHandler):
 
 
 class CrlfHandler(MessageHandler):
-    """"""
-    pass
+    """
+    Message Handler for str terminated by CRLF ('\r\n')
+    """
+
+    def __receive(self, request, buffer_size):
+        logger = self.logger
+        buf = bytearray(buffer_size)
+        received_data = bytearray()
+        receive_complete = False
+        data = None
+        try:
+            while not receive_complete:
+                nbytes = request.recv_into(buf, buffer_size)
+                if nbytes > 0:
+                    logger.debug("received %d bytes " % nbytes)
+                    received_data.extend(buf[:nbytes])
+                    receive_complete = \
+                        (received_data.rfind(b'\n') == len(received_data) - 1) and \
+                        (received_data.rfind(b'\r') == len(received_data) - 2)
+
+                    if receive_complete:
+                        data = received_data.decode(self.char_encoding)
+                        logger.debug('message received [%s]' % data)
+                else:
+                    break
+
+        except Exception:
+            logger.error("Error receiving message %s ", sys.exc_info())
+
+        return data
+
+    def __send(self, request, msg):
+        logger = self.logger
+        logger.debug("sending result [%s]" % msg)
+        if msg.find('\r\n') != len(msg) - 2:
+            msg += '\r\n'
+        try:
+            request.sendall(msg.encode(self.char_encoding))
+            logger.debug("data sent")
+
+        except:
+            logger.error("data not sent %s" % sys.exc_info()[0])
+            return False
+
+        return True
+
+    def handle(self, request, buffer_size):
+        """
+        Handle a message
+        :param request: the request socket.
+        :param buffer_size: the buffer size.
+        :return: True if success, False otherwise
+        """
+        logger = self.logger
+
+        data = self.__receive(request, buffer_size)
+        if data is None:
+            return False
+        else:
+            for message in data.split('\r\n')[:-1]:
+                result = self.handler_function(message)
+                if self.component_type == 'Processor':
+                    if not self.__send(request, result):
+                        return False
+        return True
 
 
 class HeaderLengthHandler(MessageHandler):
@@ -132,61 +208,71 @@ class HeaderLengthHandler(MessageHandler):
         self.HEADER_SIZE = header_size
         self.FORMAT = HeaderLengthHandler.FORMATS[header_size]
 
-    def handle(self, request, received_data, buf, logger):
-        """
-        Handles a socket message.
-
-        :param request: the request socket
-        :param received_data: accumulated data across multiple socket recvs
-        :param buf: the data for each socket recv invocation.
-        :param logger: the logger to use.
-        :return: updated received_data or None if the socket connection was terminated.
-        """
+    def __receive(self, request, buffer_size):
+        logger = self.logger
+        buf = bytearray(buffer_size)
         header = bytearray(self.HEADER_SIZE)
+        received_data = bytearray()
+        receive_complete = False
+        data = None
         try:
-            nbytes = request.recv_into(header, self.HEADER_SIZE)
+            while not receive_complete:
+                nbytes = request.recv_into(header, self.HEADER_SIZE)
+                if nbytes > 0:
+                    data_size = self.__data_size(header)
+                    remaining_bytes = data_size
+                    while remaining_bytes > 0:
+                        nbytes = request.recv_into(buf, min(data_size, buffer_size))
+                        if nbytes > 0:
+                            logger.debug("received %d bytes " % nbytes)
+                            received_data.extend(buf[:nbytes])
+                            remaining_bytes -= nbytes
+
+                    receive_complete = True
+                    data = received_data.decode(self.char_encoding)
+                    logger.debug('message received [%s]' % data)
+                else:
+                    break
+
+        except Exception:
+            logger.error("Error receiving message %s ", sys.exc_info())
+
+        return data
+
+    def __send(self, request, msg):
+        logger = self.logger
+        logger.debug("sending result [%s]" % msg)
+
+        try:
+            request.sendall(self.__encode(msg))
+            logger.debug("data sent")
         except:
-            return None
+            logger.error("data not sent %s" % sys.exc_info())
+            return False
 
-        if nbytes > 0:
-            data_size = self.__data_size(header)
-            logger.debug("data size is %d bytes" % data_size)
-            remaining_bytes = data_size
-            while remaining_bytes > 0:
-                try:
-                    nbytes = request.recv_into(buf, min(data_size, len(buf)))
-                except:
-                    return None
+        return True
 
-                if nbytes == 0:
-                    return None
+    def handle(self, request, buffer_size):
+        """
+        Handle a message
+        :param request: the request socket.
+        :param buffer_size: the buffer size.
+        :return: True if success, False otherwise
+        """
+        logger = self.logger
+        msg = self.__receive(request, buffer_size)
+        if msg is None:
+            return False
 
-                logger.debug("received %d bytes" % nbytes)
-                logger.debug('received [%s]' % buf[:nbytes])
+        result = self.handler_function(msg)
 
-                received_data.extend(buf[:nbytes])
-                remaining_bytes = remaining_bytes - nbytes
-
-            result = self.handler_function(received_data)
-
-            if self.component_type == 'Processor':
-                logger.debug("sending result [%s]" % result)
-
-                try:
-                    request.sendall(self.__encode(result))
-                    logger.debug("data sent")
-                except:
-                    logger.error("data not sent %s" % sys.exc_info())
-                    return None
-
-            received_data = bytearray()
-            return received_data
-        else:
-            return None
+        if self.component_type == 'Processor':
+            return self.__send(request, result)
+        return True
 
     def __encode(self, data):
         ba = bytearray(struct.pack(self.FORMAT, len(data)))
-        ba.extend(data)
+        ba.extend(bytearray(data, self.char_encoding))
         return ba
 
     def __data_size(self, header):

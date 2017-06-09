@@ -40,13 +40,13 @@ from springcloudstream.messagehandler import *
 class Encoders:
     """Named identifiers to determine which RequestHandler to use.
        CRLF - messages are terminated by '\r\n'
-       CR - The default - messages are terminated by '\n'
+       LF - The default - messages are terminated by '\n'
        L4 - Messages include a 4 byte header containing the length of the message (max length = 2**31 - 1)
        L2 - Messages include a 2 byte unsigned short header containing the length of the message (max length = 2**16)
        L1 - Messages include a 1 byte header containing the length of the message (max length = 255)
        STXETX - Messages begin with stx '0x2' and end with etx '0x3'
     """
-    CRLF, CR, STXETX, L4, L2, L1 = range(6)
+    CRLF, LF, STXETX, L4, L2, L1 = range(6)
 
     @classmethod
     def value(cls, name):
@@ -100,9 +100,9 @@ class Options:
 
         self.parser.add_option('-e', '--encoder',
                                type="choice",
-                               choices=['CR', 'CRLF', 'STXETX', 'L4', 'L2', 'L1'],
+                               choices=['LF', 'CRLF', 'STXETX', 'L4', 'L2', 'L1'],
                                help='The name of the encoder to use for delimiting messages',
-                               default='CR',
+                               default='LF',
                                dest='encoder')
 
         self.options, arguments = self.parser.parse_args(args)
@@ -155,7 +155,7 @@ class BaseStreamComponent:
         """
         encoder = Encoders.value(self.options.encoder)
         component_type = self.__class__.__name__
-        if encoder == None or encoder == Encoders.CR:
+        if encoder == None or encoder == Encoders.LF:
             return DefaultMessageHandler(handler_function, component_type, self.options.char_encoding)
         elif encoder == Encoders.STXETX:
             return StxEtxHandler(handler_function, component_type)

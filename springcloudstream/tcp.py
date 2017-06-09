@@ -96,6 +96,7 @@ class StreamHandler(BaseRequestHandler):
         cls.BUFFER_SIZE = buffer_size
         cls.message_handler = message_handler
         cls.logger = logger
+        cls.message_handler.logger = logger
         return cls
 
     def handle(self):
@@ -103,16 +104,13 @@ class StreamHandler(BaseRequestHandler):
         The required handle method.
         """
         logger = StreamHandler.logger
-        logger.debug("handling requests...")
+        logger.debug("handling requests with message handler %s " % StreamHandler.message_handler.__class__.__name__)
 
-        request_handler = StreamHandler.message_handler
-        received_data = bytearray()
+        message_handler = StreamHandler.message_handler
 
         while True:
             logger.debug('waiting for more data')
-            buf = bytearray(StreamHandler.BUFFER_SIZE)
-            received_data = request_handler.handle(self.request, received_data, buf, logger)
-            if received_data is None:
+            if not message_handler.handle(self.request, StreamHandler.BUFFER_SIZE):
                 break
 
         logger.warning("connection closed from %s" % (self.client_address[0]))
