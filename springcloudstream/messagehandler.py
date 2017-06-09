@@ -44,15 +44,14 @@ class MessageHandler:
         self.component_type = component_type
 
 
-
-
 class DefaultMessageHandler(MessageHandler):
     """
-    Default Message Handler for str terminated by CR ('\n')
+    Default Message Handler for str terminated by LF ('\n')
     """
 
     def __init__(self, handler_function, component_type, char_encoding='utf-8'):
-
+        MessageHandler.__init__(self, handler_function, component_type, char_encoding)
+        self.TERMINATOR = '\n'
 
     def __receive(self, request, buffer_size):
         logger = self.logger
@@ -66,7 +65,9 @@ class DefaultMessageHandler(MessageHandler):
                 if nbytes > 0:
                     logger.debug("received %d bytes " % nbytes)
                     received_data.extend(buf[:nbytes])
-                    receive_complete = (received_data.rfind(b'\n') == len(received_data) - 1)
+                    receive_complete = (
+                    received_data.rfind(self.TERMINATOR.encode(self.char_encoding)) == len(received_data) - len(
+                        self.TERMINATOR))
 
                     if receive_complete:
                         data = received_data.decode(self.char_encoding)
@@ -84,11 +85,13 @@ class DefaultMessageHandler(MessageHandler):
 
         logger.debug("sending result [%s]" % msg)
 
-        if msg.find('\n') != len(msg) - 1:
-            msg += '\n'
+        for b in self.TERMINATOR:
+            if msg.find(b) != len(msg) - 1:
+                msg += b
+
         try:
             request.sendall(msg.encode(self.char_encoding))
-            logger.debug("data sent")
+            logger.debug("data sent %s" % msg)
         except:
             logger.error("data not sent %s" % sys.exc_info()[0])
             return False
@@ -120,72 +123,13 @@ class StxEtxHandler(MessageHandler):
     pass
 
 
-class CrlfHandler(MessageHandler):
+class CrlfHandler(DefaultMessageHandler):
     """
     Message Handler for str terminated by CRLF ('\r\n')
     """
-
-    def __receive(self, request, buffer_size):
-        logger = self.logger
-        buf = bytearray(buffer_size)
-        received_data = bytearray()
-        receive_complete = False
-        data = None
-        try:
-            while not receive_complete:
-                nbytes = request.recv_into(buf, buffer_size)
-                if nbytes > 0:
-                    logger.debug("received %d bytes " % nbytes)
-                    received_data.extend(buf[:nbytes])
-                    receive_complete = \
-                        (received_data.rfind(b'\n') == len(received_data) - 1) and \
-                        (received_data.rfind(b'\r') == len(received_data) - 2)
-
-                    if receive_complete:
-                        data = received_data.decode(self.char_encoding)
-                        logger.debug('message received [%s]' % data)
-                else:
-                    break
-
-        except Exception:
-            logger.error("Error receiving message %s ", sys.exc_info())
-
-        return data
-
-    def __send(self, request, msg):
-        logger = self.logger
-        logger.debug("sending result [%s]" % msg)
-        if msg.find('\r\n') != len(msg) - 2:
-            msg += '\r\n'
-        try:
-            request.sendall(msg.encode(self.char_encoding))
-            logger.debug("data sent")
-
-        except:
-            logger.error("data not sent %s" % sys.exc_info()[0])
-            return False
-
-        return True
-
-    def handle(self, request, buffer_size):
-        """
-        Handle a message
-        :param request: the request socket.
-        :param buffer_size: the buffer size.
-        :return: True if success, False otherwise
-        """
-        logger = self.logger
-
-        data = self.__receive(request, buffer_size)
-        if data is None:
-            return False
-        else:
-            for message in data.split('\r\n')[:-1]:
-                result = self.handler_function(message)
-                if self.component_type == 'Processor':
-                    if not self.__send(request, result):
-                        return False
-        return True
+    def __init__(self, handler_function, component_type, char_encoding='utf-8'):
+        DefaultMessageHandler.__init__(self, handler_function, component_type, char_encoding)
+        self.TERMINATOR = '\r\n'
 
 
 class HeaderLengthHandler(MessageHandler):

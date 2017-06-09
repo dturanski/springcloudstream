@@ -29,7 +29,7 @@ class OptionsTest(unittest.TestCase):
         options = opts.options
 
         self.assertEquals(2048, options.buffer_size)
-        self.assertEquals('CR', options.encoder)
+        self.assertEquals('LF', options.encoder)
         self.assertEqual(False,options.debug)
         self.assertEqual(None, options.port)
         self.assertEqual(None, options.monitor_port)
