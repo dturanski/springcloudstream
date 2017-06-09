@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
-import os
-os.environ['SKIP_TESTS'] = str(True)
 setup(name='springcloudstream',
-      version='1.0.0',
+      version='1.0.1',
       test_suite='tests.suite',
-      description='A module to support streaming with spring-cloud-stream',
+      description='A module to support Python applications using Spring Cloud Stream',
       author='David Turanski',
       author_email='dturanski@pivotal.io',
       url = 'https://github.com/dturanski/springcloudstream',

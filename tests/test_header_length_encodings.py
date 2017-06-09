@@ -1,4 +1,4 @@
-"""
+__copyright__ = """
 Copyright 2017 the original author or authors.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import struct
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-skip_tests = os.environ.get('SKIP_TESTS', False)
 
 HOST, PORT = "localhost", 9999
 
@@ -41,13 +40,20 @@ if PYTHON3:
 def random_data(size):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(size))
 
+def servers_root():
+    if (os.getcwd().endswith('springcloudstream')):
+        return 'tests/.'
+    elif (os.getcwd().endswith('tests')):
+        return '.'
+    else:
+        return '.'
 
 class BaseTestCases:
-    @unittest.skipIf(skip_tests, 'tests skipped')
     class TestTcpUpperBase(unittest.TestCase):
 
         @classmethod
         def setUpClass(cls, server):
+            server = '%s/%s' % (servers_root(),server)
             print("starting %s" % server)
             cls.process = subprocess.Popen(
                 "%s %s" %(PY_COMMAND, server),
@@ -126,7 +132,7 @@ class TestTcpL2(BaseTestCases.TestTcpUpperBase):
         BaseTestCases.TestTcpUpperBase.tearDownClass()
 
 class TestTcpL4(BaseTestCases.TestTcpUpperBase):
-    SERVER = 'servers/tcp_upper_hl4.py'
+    SERVER =  SERVER = 'servers/tcp_upper_hl4.py'
     FORMAT = '!L'
     HEADER_LEN = 4
 
@@ -139,7 +145,7 @@ class TestTcpL4(BaseTestCases.TestTcpUpperBase):
         BaseTestCases.TestTcpUpperBase.tearDownClass()
 
 class TestTcpL1(BaseTestCases.TestTcpUpperBase):
-    SERVER = 'servers/tcp_upper_hl1.py'
+    SERVER =  SERVER = 'servers/tcp_upper_hl1.py'
     FORMAT = 'b'
     HEADER_LEN = 1
 

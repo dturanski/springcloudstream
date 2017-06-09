@@ -13,12 +13,15 @@ Copyright 2017 the original author or authors.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import os,sys
+sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
-from springcloudstream.tcp import Processor
+from springcloudstream.stream import Processor
 
 
 def upper(data):
     return data.upper()
 
 
-Processor(port=9999, ping_port=9998, debug=True, buffer_size=1024).start(upper)
+Processor(upper, port=9999, ping_port=9998, debug=True, buffer_size=1024).start()

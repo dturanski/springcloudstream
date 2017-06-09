@@ -1,4 +1,4 @@
-"""
+__copyright__ = """
 Copyright 2017 the original author or authors.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,9 +29,6 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
 
-
-skip_tests = os.environ.get('SKIP_TESTS', False)
-
 HOST, PORT = "localhost", 9999
 
 PYTHON3 = sys.version_info >= (3, 0)
@@ -43,13 +40,22 @@ if PYTHON3:
 def random_data(size):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(size)) + '\n'
 
+def servers_root():
+    if (os.getcwd().endswith('springcloudstream')):
+        return './tests'
+    elif (os.getcwd().endswith('tests')):
+        return '.'
+    else:
+        return '.'
 
-@unittest.skipIf(skip_tests, 'tests skipped')
+
 class TestTcp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        SERVER = '%s/servers/tcp_upper.py' % servers_root()
+
         cls.process = subprocess.Popen(
-            '%s servers/tcp_upper.py' % PY_COMMAND,
+            '%s %s' % (PY_COMMAND, SERVER),
             shell=True, preexec_fn=os.setsid
         )
         time.sleep(1.0)
@@ -116,4 +122,6 @@ class TestTcp(unittest.TestCase):
         result = result.decode('utf-8')
         self.assertEqual(data.upper(), result)
 
-
+    if __name__ == 'main':
+        unittest.main()
+        print(os.getcwd())

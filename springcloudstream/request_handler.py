@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-"""
+__copyright__ = '''
 Copyright 2017 the original author or authors.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,7 @@ Copyright 2017 the original author or authors.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-"""
-import sys
-import os
+'''
 
-sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('.'))
+__author__ = 'David Turanski'
 
-from springcloudstream.stream import Processor
-
-def echo(data):
-    return data
-
-
-processor = Processor()
-processor.start(echo)

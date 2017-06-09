@@ -1,4 +1,4 @@
-"""
+__copyright__ = '''
 Copyright 2017 the original author or authors.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,120 +12,68 @@ Copyright 2017 the original author or authors.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-"""
+'''
+
 __author__ = 'David Turanski'
+
+import logging
+import threading
 import sys
-'''
-Python 2 or 3 agnostic input function
-'''
+import os
+
+
 
 PYTHON3 = sys.version_info >= (3, 0)
 
 if PYTHON3:
-    binary_input = sys.stdin.buffer
-    receive_input = input
+    from socketserver import TCPServer
 else:
-    # Python 2 on Windows opens sys.stdin in text mode, and
-    # binary data that read from it becomes corrupted on \r\n
-    #if sys.platform == "win32":
-    #    # set sys.stdin to binary mode
-    #    import os, msvcrt
-    #    msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
-    binary_input = sys.stdin
-    receive_input = raw_input
+    from SocketServer import TCPServer
 
-class Encoders:
-    CRLF, LF, BINARY = range(3)
+from springcloudstream.tcp import StreamHandler, MonitorHandler
 
-'''
-Wraps a function and handles streaming I/O for request/reply communications to use the function as
-a Spring XD processor.
-NOTE: This implementation only works with LF, or CRLF encoding since reading single chars from stdin is not
-standard nor portable.
-'''
+"""
+
+"""
+
 class Processor:
-
-    def __init__(self, encoder = Encoders.CRLF):
+    def __init__(self, handler_function, encoder=None, buffer_size=2048, debug=False, port=None, ping_port=None):
+        self.handler_function = handler_function
         self.encoder = encoder
+        self.buffer_size = buffer_size
+        self.debug = debug
+        self.logger = logging.getLogger(__name__)
 
-    '''
-    Write data to stdout
-    '''
-    def send(self, data):
-        sys.stdout.write(self.encode(data))
-        sys.stdout.flush()
+        self.port = os.environ.get('PORT', port)
+        if not self.port:
+            self.logger.error("No port defined in initializer or 'PORT' environment variable.")
+            sys.exit(1)
+        self.port = int(self.port)
 
-    '''
-    encode data
-    '''
-    def encode(self,data):
-        if self.encoder == Encoders.CRLF:
-            data = data + '\r\n'
-        elif self.encoder == Encoders.LF:
-            data = data + '\n'
-        elif self.encoder == Encoders.BINARY:
-            data = data + '\x1a'
-        return data
-    '''
-    decode data
-    '''
-    def decode(self,data):
-        if self.encoder == Encoders.CRLF:
-            data = data.rstrip('\n')
-            data = data.rstrip('\r')
-        elif self.encoder == Encoders.LF:
-            data = data.rstrip('\n')
-        elif self.encoder == Encoders.BINARY:
-            data = data.rstrip('\x1a')
-        return data
+        self.ping_port = os.environ.get('PING_PORT', ping_port)
 
-    def read_input(self):
-        if self.encoder == Encoders.BINARY:
-            input = self.binary_input()
+        if self.ping_port:
+            self.ping_port = int(self.ping_port)
+
+    def start(self):
+
+        if not self.ping_port:
+            self.logger.warn(
+                "Monitoring not enabled. No ping_port defined in initializer or 'PING_PORT' environment variable.")
         else:
-            input = receive_input()
+            threading.Thread(target=self.monitor).start()
 
-        if input:
-            return self.decode(input)
+        # Create the server, binding to localhost on configured port
+        self.logger.info('Starting server on port %d Python version %s.%s.%s' % ( (self.port,) + sys.version_info[:3]) )
+        server = TCPServer(('localhost', self.port),
+                                        StreamHandler.create_handler(self.handler_function, self.encoder, self.buffer_size,
+                                                                     self.debug))
 
-    '''
-    Run the I/O loop with a user-defined function
-    '''
-    def start(self, func):
-        while True:
-            try:
-               data = self.read_input()
-               if data:
-                    self.send(func(data))
-            except EOFError:
-                break
-            except KeyboardInterrupt:
-                break
+        # Activate the server; this will keep running until you
+        # interrupt the program with Ctrl-C
+        server.serve_forever()
 
-    def binary_input(self):
-        buf=[]
-        while True:
-            buf.append(binary_input.read(1))
-            if buf[-1] == '\x1a':
-                break
-
-        return ''.join(buf)
-
-
-class Sink(Processor):
-    '''
-    Run the I/O loop with a user-defined function
-    '''
-    def start(self, func):
-        pass
-        while True:
-            try:
-                data = self.read_input()
-                if data:
-                    func(data)
-            except EOFError:
-                break
-            except EOFError:
-                break
-            except KeyboardInterrupt:
-                break
+    def monitor(self):
+        self.logger.info('Starting monitor server on port %d' % self.ping_port)
+        server = TCPServer(('localhost', self.ping_port), MonitorHandler)
+        server.serve_forever()
