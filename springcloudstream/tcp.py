@@ -112,7 +112,7 @@ class StreamHandler(BaseRequestHandler):
             logger.debug('waiting for more data')
             buf = bytearray(StreamHandler.BUFFER_SIZE)
             received_data = request_handler.handle(self.request, received_data, buf, logger)
-            if received_data == None:
+            if received_data is None:
                 break
 
         logger.warning("connection closed from %s" % (self.client_address[0]))

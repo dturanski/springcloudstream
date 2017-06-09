@@ -16,12 +16,15 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
+__version__ = '1.0.1'
+
 """
-Implementations of MessageHandler used by stream components
+Implementations of MessageHandler used by stream components.
 """
 
 import struct
 import sys
+
 
 class MessageHandler:
     """
@@ -29,12 +32,16 @@ class MessageHandler:
     Called by StreamHandler to encode/decode socket message and invoke the handler_function.
     """
 
-    def __init__(self, handler_function, char_encoding='utf-8'):
+    def __init__(self, handler_function, component_type, char_encoding='utf-8'):
         """
         :param handler_function: the handler function to execute for each message.
         """
         self.handler_function = handler_function
         self.char_encoding = char_encoding
+        if not component_type in ('Processor', 'Sink'):
+            raise NotImplementedError("component type %s is not implemented" % component_type)
+
+        self.component_type = component_type
 
 
 class DefaultMessageHandler(MessageHandler):
@@ -52,6 +59,7 @@ class DefaultMessageHandler(MessageHandler):
         :param logger: the logger to use.
         :return: updated received_data or None if the socket connection was terminated.
         """
+
         try:
             nbytes = request.recv_into(buf, len(buf))
         except:
@@ -72,18 +80,21 @@ class DefaultMessageHandler(MessageHandler):
                 data = received_data[:terminator_pos].decode(self.char_encoding)
                 logger.debug("received [%s]" % data)
                 received_data = received_data[terminator_pos + 1:]
+
                 # invoke the handler function on the data
                 result = self.handler_function(data)
-                logger.debug("sending result [%s]" % result)
 
-                if result.find('\n') != len(result) - 1:
-                    result = result + '\n'
-                try:
-                    request.sendall(result.encode(self.char_encoding))
-                    logger.debug("data sent")
-                except:
-                    logger.error("data not sent %s" % sys.exc_info()[0])
-                    return None
+                if self.component_type == 'Processor':
+                    logger.debug("sending result [%s]" % result)
+
+                    if result.find('\n') != len(result) - 1:
+                        result = result + '\n'
+                    try:
+                        request.sendall(result.encode(self.char_encoding))
+                        logger.debug("data sent")
+                    except:
+                        logger.error("data not sent %s" % sys.exc_info()[0])
+                        return None
 
                 terminator_pos = received_data.find(b'\n')
             return received_data
@@ -110,12 +121,12 @@ class HeaderLengthHandler(MessageHandler):
     BYTE = 'B'
     FORMATS = {4: LONG, 2: SHORT, 1: BYTE}
 
-    def __init__(self, header_size, handler_function):
+    def __init__(self, header_size, handler_function, component_type):
         """
         :param header_size: the size of the message length header in bytes (1,2, or 4)
         :param handler_function: the handler function to execute for each message
         """
-        MessageHandler.__init__(self, handler_function)
+        MessageHandler.__init__(self, handler_function, component_type)
         if not header_size in (1, 2, 4):
             raise RuntimeError('Invalid header_size. Valid values are 1, 2 and 4')
         self.HEADER_SIZE = header_size
@@ -157,14 +168,16 @@ class HeaderLengthHandler(MessageHandler):
                 remaining_bytes = remaining_bytes - nbytes
 
             result = self.handler_function(received_data)
-            logger.debug("sending result [%s]" % result)
 
-            try:
-                request.sendall(self.__encode(result))
-                logger.debug("data sent")
-            except:
-                logger.error("data not sent %s" % sys.exc_info())
-                return None
+            if self.component_type == 'Processor':
+                logger.debug("sending result [%s]" % result)
+
+                try:
+                    request.sendall(self.__encode(result))
+                    logger.debug("data sent")
+                except:
+                    logger.error("data not sent %s" % sys.exc_info())
+                    return None
 
             received_data = bytearray()
             return received_data

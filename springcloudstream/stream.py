@@ -16,6 +16,8 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
+__version__ = '1.0.1'
+
 """
 This module contains stream components to act as the main entry point for this library. The stream components are
 Processor - supports receive/send messaging
@@ -152,18 +154,19 @@ class BaseStreamComponent:
         :return: a MessageHandler
         """
         encoder = Encoders.value(self.options.encoder)
+        component_type = self.__class__.__name__
         if encoder == None or encoder == Encoders.CR:
-            return DefaultMessageHandler(handler_function, self.options.char_encoding)
+            return DefaultMessageHandler(handler_function, component_type, self.options.char_encoding)
         elif encoder == Encoders.STXETX:
-            return StxEtxHandler(handler_function)
+            return StxEtxHandler(handler_function, component_type)
         elif encoder == Encoders.CRLF:
-            return CrlfHandler(handler_function)
+            return CrlfHandler(handler_function, component_type)
         elif encoder == Encoders.L4:
-            return HeaderLengthHandler(4, handler_function)
+            return HeaderLengthHandler(4, handler_function, component_type)
         elif encoder == Encoders.L2:
-            return HeaderLengthHandler(2, handler_function)
+            return HeaderLengthHandler(2, handler_function, component_type)
         elif encoder == Encoders.L1:
-            return HeaderLengthHandler(1, handler_function)
+            return HeaderLengthHandler(1, handler_function, component_type)
         else:
             raise NotImplementedError('No RequestHandler defined for given encoder (%s).' % self.options.encoder)
 
@@ -173,6 +176,10 @@ class Processor(BaseStreamComponent):
     """Stream Processor - receives and sends messages."""
 
     def __init__(self, handler_function, args=[]):
+        """
+        :param handler_function: a single argument function that returns a value
+        :param args: See Options
+        """
         BaseStreamComponent.__init__(self, handler_function, args)
 
 
@@ -180,6 +187,10 @@ class Sink(BaseStreamComponent):
     """Stream Sink - receives messages only"""
 
     def __init__(self, handler_function, args=[]):
+        """
+        :param handler_function: a single argument function that does not return a value
+        :param args: See Options
+        """
         BaseStreamComponent.__init__(self, handler_function, args)
 
 
@@ -187,4 +198,8 @@ class Source(BaseStreamComponent):
     """Stream Source - sends messages from an external pollable or event driven source """
 
     def __init__(self, handler_function, args=[]):
+        """
+        :param handler_function: a no argument function that returns a value (a pollable or event source)
+        :param args: See Options
+        """
         BaseStreamComponent.__init__(self, handler_function, args)
