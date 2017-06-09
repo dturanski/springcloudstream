@@ -17,11 +17,14 @@ import os,sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
+
 from springcloudstream.stream import Processor
-from springcloudstream.tcp import Encoders
 
 def upper(data):
     return data.upper()
 
-
-Processor(upper, port=9999, ping_port=9998, debug=True, encoder=Encoders.L2).start()
+args =['--port','9999',
+       '--monitor-port','9998',
+       '--debug','True',
+       '--encoder','L2']
+Processor(upper, args).start()

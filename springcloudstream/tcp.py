@@ -50,6 +50,10 @@ class Encoders:
     """
     CRLF, CR, STXETX, L4, L2, L1 = range(6)
 
+    @classmethod
+    def value(cls,name):
+        return cls.__dict__[name]
+
 
 class MessageHandler:
     """
@@ -236,9 +240,9 @@ class StreamHandler(BaseRequestHandler):
         self.request.close()
 
     def create_request_handler(self):
-        encoder = StreamHandler.encoder
+        self.encoder = Encoders.value(StreamHandler.encoder)
         handler_function = StreamHandler.handler_function
-        if encoder == None or encoder == Encoders.CR:
+        if self.encoder == None or self.encoder == Encoders.CR:
             return DefaultMessageHandler(handler_function)
         elif self.encoder == Encoders.STXETX:
             return StxEtxHandler(handler_function)
@@ -251,7 +255,7 @@ class StreamHandler(BaseRequestHandler):
         elif self.encoder == Encoders.L1:
             return HeaderLengthHandler(1, handler_function)
         else:
-            raise NotImplementedError('No RequestHandler defined for given encoder.')
+            raise NotImplementedError('No RequestHandler defined for given encoder (%s).' % self.encoder)
 
 
 class MonitorHandler(BaseRequestHandler):

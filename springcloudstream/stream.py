@@ -20,8 +20,9 @@ import logging
 import threading
 import sys
 import os
-
-
+import os, sys
+from optparse import OptionParser
+import codecs
 
 PYTHON3 = sys.version_info >= (3, 0)
 
@@ -36,44 +37,94 @@ from springcloudstream.tcp import StreamHandler, MonitorHandler
 
 """
 
+
+class Options:
+    def __init__(self, args):
+        self.parser = OptionParser()
+
+        self.parser.usage = "%prog [options] --help for help"
+
+        self.parser.add_option('-p', '--port',
+                               type='int',
+                               help='the socket port to use',
+                               dest='port')
+        self.parser.add_option('-m', '--monitor-port',
+                               type='int',
+                               help='the socket to use for the monitoring server',
+                               dest='monitor_port')
+
+        self.parser.add_option('-s', '--buffer-size',
+                               help='the tcp buffer size',
+                               default=2048,
+                               dest='buffer_size')
+
+        self.parser.add_option('-d', '--debug',
+                               action='store_true',
+                               help='turn on debug logging',
+                               default=False,
+                               dest='debug')
+
+        self.parser.add_option('-c', '--char-encoding',
+                               help='character encoding',
+                               default='utf-8',
+                               dest='char_encoding')
+
+        self.parser.add_option('-e', '--encoder',
+                               type="choice",
+                               choices=['CR', 'CRLF', 'STXETX', 'L4', 'L2', 'L1'],
+                               help='The name of the encoder to use for delimiting messages',
+                               default='CR',
+                               dest='encoder')
+
+        self.options, arguments = self.parser.parse_args(args)
+
+    def validate(self):
+        if not self.options.port:
+            print("'port' is required")
+            sys.exit(2)
+        if self.options.port == self.options.monitor_port:
+            print("'port' and 'monitor-port' must not be the same.")
+            sys.exit(2)
+        if self.options.buffer_size <= 0:
+            print("'buffer_size' must be > 0.")
+            sys.exit(2)
+        try:
+            codecs.getencoder(self.options.char_encoding)
+        except LookupError:
+            print("invalid 'char-encoding' %s" % self.options.char_encoding)
+            sys.exit(2)
+
+
 class Processor:
-    def __init__(self, handler_function, encoder=None, buffer_size=2048, debug=False, port=None, ping_port=None):
+    def __init__(self, handler_function, args=[]):
         self.handler_function = handler_function
-        self.encoder = encoder
-        self.buffer_size = buffer_size
-        self.debug = debug
+        opts = Options(args)
+        opts.validate()
+
+        self.options = opts.options
+
         self.logger = logging.getLogger(__name__)
 
-        self.port = os.environ.get('PORT', port)
-        if not self.port:
-            self.logger.error("No port defined in initializer or 'PORT' environment variable.")
-            sys.exit(1)
-        self.port = int(self.port)
-
-        self.ping_port = os.environ.get('PING_PORT', ping_port)
-
-        if self.ping_port:
-            self.ping_port = int(self.ping_port)
 
     def start(self):
 
-        if not self.ping_port:
+        if not self.options.monitor_port:
             self.logger.warn(
                 "Monitoring not enabled. No ping_port defined in initializer or 'PING_PORT' environment variable.")
         else:
             threading.Thread(target=self.monitor).start()
 
         # Create the server, binding to localhost on configured port
-        self.logger.info('Starting server on port %d Python version %s.%s.%s' % ( (self.port,) + sys.version_info[:3]) )
-        server = TCPServer(('localhost', self.port),
-                                        StreamHandler.create_handler(self.handler_function, self.encoder, self.buffer_size,
-                                                                     self.debug))
+        self.logger.info('Starting server on port %d Python version %s.%s.%s' % ((self.options.port,) + sys.version_info[:3]))
+        server = TCPServer(('localhost', self.options.port),
+                           StreamHandler.create_handler(self.handler_function, self.options.encoder, self.options.buffer_size,
+                                                        self.options.debug))
 
         # Activate the server; this will keep running until you
         # interrupt the program with Ctrl-C
         server.serve_forever()
 
     def monitor(self):
-        self.logger.info('Starting monitor server on port %d' % self.ping_port)
-        server = TCPServer(('localhost', self.ping_port), MonitorHandler)
+        self.logger.info('Starting monitor server on port %d' % self.options.monitor_port)
+        server = TCPServer(('localhost', self.options.monitor_port), MonitorHandler)
         server.serve_forever()

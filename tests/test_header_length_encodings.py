@@ -156,3 +156,6 @@ class TestTcpL1(BaseTestCases.TestTcpUpperBase):
     @classmethod
     def tearDownClass(cls):
         BaseTestCases.TestTcpUpperBase.tearDownClass()
+
+if __name__ == 'main':
+    unittest.main()

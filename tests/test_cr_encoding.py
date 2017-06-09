@@ -122,6 +122,6 @@ class TestTcp(unittest.TestCase):
         result = result.decode('utf-8')
         self.assertEqual(data.upper(), result)
 
-    if __name__ == 'main':
-        unittest.main()
-        print(os.getcwd())
+if __name__ == 'main':
+    unittest.main()
+
