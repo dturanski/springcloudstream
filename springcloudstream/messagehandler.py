@@ -16,7 +16,12 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
+"""
+Implementations of MessageHandler used by stream components
+"""
+
 import struct
+import sys
 
 class MessageHandler:
     """
@@ -24,11 +29,12 @@ class MessageHandler:
     Called by StreamHandler to encode/decode socket message and invoke the handler_function.
     """
 
-    def __init__(self, handler_function):
+    def __init__(self, handler_function, char_encoding='utf-8'):
         """
         :param handler_function: the handler function to execute for each message.
         """
         self.handler_function = handler_function
+        self.char_encoding = char_encoding
 
 
 class DefaultMessageHandler(MessageHandler):
@@ -63,7 +69,7 @@ class DefaultMessageHandler(MessageHandler):
             Handle multiple occurences of terminators in stream
             '''
             while terminator_pos != -1:
-                data = received_data[:terminator_pos].decode('utf-8')
+                data = received_data[:terminator_pos].decode(self.char_encoding)
                 logger.debug("received [%s]" % data)
                 received_data = received_data[terminator_pos + 1:]
                 # invoke the handler function on the data
@@ -73,7 +79,7 @@ class DefaultMessageHandler(MessageHandler):
                 if result.find('\n') != len(result) - 1:
                     result = result + '\n'
                 try:
-                    request.sendall(result.encode('utf-8'))
+                    request.sendall(result.encode(self.char_encoding))
                     logger.debug("data sent")
                 except:
                     logger.error("data not sent %s" % sys.exc_info()[0])

@@ -17,15 +17,18 @@ Copyright 2017 the original author or authors.
 __author__ = 'David Turanski'
 
 """
+This module contains stream components to act as the main entry point for this library. The stream components are
+Processor - supports receive/send messaging
+Sink - support receive only messaging
+Source - supports send only messaging
 
+Each stream component requires a handler function: 
+For a Processor,  a single argument(<str>, or bytes-like) function that returns a value (<str>, or bytes-like).
+For a Sink, a single argument(<str>, or bytes-like) function, the return value is ignored
+For a Source, a no argument function that returns a value (<str>, or bytes-like).
 """
 
-
-import logging
-import threading
 import sys
-import os
-import os, sys
 from optparse import OptionParser
 import codecs
 
@@ -49,7 +52,19 @@ class Encoders:
 
 class Options:
     """
-    Encapsulates on OptionParser to handle options for BaseStreamComponent
+    Encapsulates on OptionParser to handle options for BaseStreamComponent. Supported options include:
+
+    -h, --help            show this help message and exit
+    -p PORT, --port=PORT  the socket port to use (required)
+    -m MONITOR_PORT, --monitor-port=MONITOR_PORT (strongly advised)
+                        the socket to use for the monitoring server
+    -s BUFFER_SIZE, --buffer-size=BUFFER_SIZE (optional, default is 2048)
+                        the tcp buffer size
+    -d, --debug           turn on debug logging
+    -c CHAR_ENCODING, --char-encoding=CHAR_ENCODING (optional, default is 'utf-8')
+                        character encoding
+    -e ENCODER, --encoder=ENCODER (optional, default is 'CR')
+                        The name of the encoder to use for delimiting messages
     """
     def __init__(self, args):
         self.parser = OptionParser()
@@ -112,14 +127,13 @@ class Options:
 
 class BaseStreamComponent:
     """
-    The Base class for Stream Components
+    The Base class for Stream Components.
     """
     def __init__(self, handler_function, args=[]):
         """
         :param handler_function: The function to execute on each message
         :param args: command line options or list representing as sys.argv
         """
-
         opts = Options(args)
         opts.validate()
         self.options = opts.options
@@ -139,7 +153,7 @@ class BaseStreamComponent:
         """
         encoder = Encoders.value(self.options.encoder)
         if encoder == None or encoder == Encoders.CR:
-            return DefaultMessageHandler(handler_function)
+            return DefaultMessageHandler(handler_function, self.options.char_encoding)
         elif encoder == Encoders.STXETX:
             return StxEtxHandler(handler_function)
         elif encoder == Encoders.CRLF:
