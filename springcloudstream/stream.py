@@ -16,6 +16,11 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
+"""
+
+"""
+
+
 import logging
 import threading
 import sys
@@ -24,21 +29,28 @@ import os, sys
 from optparse import OptionParser
 import codecs
 
-PYTHON3 = sys.version_info >= (3, 0)
+from springcloudstream.tcp import launch_server
+from springcloudstream.messagehandler import *
 
-if PYTHON3:
-    from socketserver import TCPServer
-else:
-    from SocketServer import TCPServer
+class Encoders:
+    """Named identifiers to determine which RequestHandler to use.
+       CRLF - messages are terminated by '\r\n'
+       CR - The default - messages are terminated by '\n'
+       L4 - Messages include a 4 byte header containing the length of the message (max length = 2**31 - 1)
+       L2 - Messages include a 2 byte unsigned short header containing the length of the message (max length = 2**16)
+       L1 - Messages include a 1 byte header containing the length of the message (max length = 255)
+       STXETX - Messages begin with stx '0x2' and end with etx '0x3'
+    """
+    CRLF, CR, STXETX, L4, L2, L1 = range(6)
 
-from springcloudstream.tcp import StreamHandler, MonitorHandler
-
-"""
-
-"""
-
+    @classmethod
+    def value(cls, name):
+        return cls.__dict__[name]
 
 class Options:
+    """
+    Encapsulates on OptionParser to handle options for BaseStreamComponent
+    """
     def __init__(self, args):
         self.parser = OptionParser()
 
@@ -79,6 +91,9 @@ class Options:
         self.options, arguments = self.parser.parse_args(args)
 
     def validate(self):
+        """
+        Validate the options or exit()
+        """
         if not self.options.port:
             print("'port' is required")
             sys.exit(2)
@@ -95,36 +110,67 @@ class Options:
             sys.exit(2)
 
 
-class Processor:
+class BaseStreamComponent:
+    """
+    The Base class for Stream Components
+    """
     def __init__(self, handler_function, args=[]):
-        self.handler_function = handler_function
+        """
+        :param handler_function: The function to execute on each message
+        :param args: command line options or list representing as sys.argv
+        """
+
         opts = Options(args)
         opts.validate()
-
         self.options = opts.options
-
-        self.logger = logging.getLogger(__name__)
-
+        self.message_handler = self.create_message_handler(handler_function)
 
     def start(self):
+        """
+        Start the server and run forever.
+        """
+        launch_server(self.message_handler, self.options)
 
-        if not self.options.monitor_port:
-            self.logger.warn(
-                "Monitoring not enabled. No ping_port defined in initializer or 'PING_PORT' environment variable.")
+    def create_message_handler(self,handler_function):
+        """
+        Create a MessageHandler for the configured Encoder
+        :param handler_function: The function to execute on each message
+        :return: a MessageHandler
+        """
+        encoder = Encoders.value(self.options.encoder)
+        if encoder == None or encoder == Encoders.CR:
+            return DefaultMessageHandler(handler_function)
+        elif encoder == Encoders.STXETX:
+            return StxEtxHandler(handler_function)
+        elif encoder == Encoders.CRLF:
+            return CrlfHandler(handler_function)
+        elif encoder == Encoders.L4:
+            return HeaderLengthHandler(4, handler_function)
+        elif encoder == Encoders.L2:
+            return HeaderLengthHandler(2, handler_function)
+        elif encoder == Encoders.L1:
+            return HeaderLengthHandler(1, handler_function)
         else:
-            threading.Thread(target=self.monitor).start()
+            raise NotImplementedError('No RequestHandler defined for given encoder (%s).' % self.options.encoder)
 
-        # Create the server, binding to localhost on configured port
-        self.logger.info('Starting server on port %d Python version %s.%s.%s' % ((self.options.port,) + sys.version_info[:3]))
-        server = TCPServer(('localhost', self.options.port),
-                           StreamHandler.create_handler(self.handler_function, self.options.encoder, self.options.buffer_size,
-                                                        self.options.debug))
 
-        # Activate the server; this will keep running until you
-        # interrupt the program with Ctrl-C
-        server.serve_forever()
 
-    def monitor(self):
-        self.logger.info('Starting monitor server on port %d' % self.options.monitor_port)
-        server = TCPServer(('localhost', self.options.monitor_port), MonitorHandler)
-        server.serve_forever()
+class Processor(BaseStreamComponent):
+    """Stream Processor - receives and sends messages."""
+
+    def __init__(self, handler_function, args=[]):
+        BaseStreamComponent.__init__(self, handler_function, args)
+
+
+class Sink(BaseStreamComponent):
+    """Stream Sink - receives messages only"""
+
+    def __init__(self, handler_function, args=[]):
+        BaseStreamComponent.__init__(self, handler_function, args)
+
+
+class Source(BaseStreamComponent):
+    """Stream Source - sends messages from an external pollable or event driven source """
+
+    def __init__(self, handler_function, args=[]):
+        BaseStreamComponent.__init__(self, handler_function, args)
