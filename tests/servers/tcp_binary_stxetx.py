@@ -25,7 +25,6 @@ from springcloudstream.stream import Processor
 
 
 def multiply(data):
-    print(data)
     vals = struct.unpack('!if',data)
     return struct.pack('f',vals[0]*vals[1])
 
