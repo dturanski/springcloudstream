@@ -104,9 +104,6 @@ class TestTcp(unittest.TestCase):
 
     def sendAndRecieve(self, sock, data):
         sock.sendall(data.encode('utf-8'))
-        # Receive data from the server and shut down
-        # Different for Python 3
-        # str(sock.recv(1024),"utf-8")
         result =  sock.recv(len(data))
         result = result.decode('utf-8')
         self.assertEqual(data.upper(), result)

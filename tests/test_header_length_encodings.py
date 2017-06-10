@@ -133,7 +133,7 @@ class TestTcpL2(BaseTestCases.TestTcpUpperBase):
 
 class TestTcpL4(BaseTestCases.TestTcpUpperBase):
     SERVER =  SERVER = 'servers/tcp_upper_hl4.py'
-    FORMAT = '!L'
+    FORMAT = '!l'
     HEADER_LEN = 4
 
     @classmethod
@@ -156,6 +156,42 @@ class TestTcpL1(BaseTestCases.TestTcpUpperBase):
     @classmethod
     def tearDownClass(cls):
         BaseTestCases.TestTcpUpperBase.tearDownClass()
+
+
+class TestTcpBinary(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        SERVER = '%s/servers/tcp_binary.py' % servers_root()
+
+        cls.process = subprocess.Popen(
+            '%s %s' % (PY_COMMAND, SERVER),
+            shell=True, preexec_fn=os.setsid
+        )
+        time.sleep(1.0)
+
+
+    @classmethod
+    def tearDownClass(cls):
+       try:
+            os.killpg(cls.process.pid, signal.SIGTERM)
+       except:
+           print("ERROR: Unable to kill PID %d" % cls.process.pid)
+
+    def test(self):
+        # Create a socket (SOCK_STREAM means a TCP socket)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            # Connect to server and send data
+            sock.connect((HOST, PORT))
+            data = struct.pack('!if', 2, 3.0)
+            data = struct.pack('!H',len(data)) + data
+            sock.sendall(bytearray(data))
+            received = sock.recv(1024)
+            l = struct.unpack('!H', received[:2])[0]
+            result = struct.unpack('f',received[2:])[0]
+            self.assertEqual(result, 6.0)
+        finally:
+            sock.close()
 
 if __name__ == 'main':
     unittest.main()

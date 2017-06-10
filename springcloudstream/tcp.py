@@ -108,14 +108,18 @@ class StreamHandler(BaseRequestHandler):
 
         message_handler = StreamHandler.message_handler
 
-        while True:
-            logger.debug('waiting for more data')
-            if not message_handler.handle(self.request, StreamHandler.BUFFER_SIZE):
-                break
+        try:
+            while True:
+                logger.debug('waiting for more data')
+                if not message_handler.handle(self.request, StreamHandler.BUFFER_SIZE):
+                    break
 
-        logger.warning("connection closed from %s" % (self.client_address[0]))
-        self.request.close()
-
+            logger.warning("connection closed from %s" % (self.client_address[0]))
+            self.request.close()
+        except:
+            logger.exception("connection closed from %s" % (self.client_address[0]))
+        finally:
+            self.request.close()
 
 
 class MonitorHandler(BaseRequestHandler):
@@ -123,13 +127,16 @@ class MonitorHandler(BaseRequestHandler):
 
     def handle(self):
         logger = logging.getLogger(__name__)
-        while True:
-            data = self.request.recv(80)
-            if not data:
-                break
+        try:
+            while True:
+                data = self.request.recv(80)
+                if not data:
+                    break
+                logger.debug('got ping request %s' % data)
+                self.request.sendall('alive\n'.encode('utf-8'));
 
-            logger.debug('got ping request %s' % data)
-            self.request.sendall('alive\n'.encode('utf-8'));
-
-        logger.warning("monitor connection closed  %s" % (self.client_address[0]))
-        self.request.close()
+            logger.warning("monitor connection closed  %s" % (self.client_address[0]))
+        except Exception:
+            logger.exception("connection closed from %s" % (self.client_address[0]))
+        finally:
+            self.request.close()

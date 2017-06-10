@@ -20,11 +20,13 @@ sys.path.insert(0, os.path.abspath('.'))
 
 from springcloudstream.stream import Processor
 
+
 def upper(data):
     return data.upper()
 
 args =['--port','9999',
        '--monitor-port','9998',
        '--debug','True',
+       '--encoder','STXETX'
        ]
 Processor(upper,args).start()
