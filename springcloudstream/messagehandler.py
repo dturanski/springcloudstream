@@ -24,6 +24,7 @@ Implementations of MessageHandler used by stream components.
 
 import struct
 from array import array
+from springcloudstream.stream import StreamComponent
 
 
 def rindex(iterable, value):
@@ -41,11 +42,11 @@ def split_array(lst, val):
     while not done:
         try:
             ind = l.index(val)
-            if (ind > 0):
+            if ind > 0:
                 splits.append(l[:ind])
             l = l[ind+1:]
         except ValueError:
-            if (len(l) > 0):
+            if len(l) > 0:
                 splits.append(l)
             done = True
 
@@ -64,7 +65,7 @@ class MessageHandler:
         """
         self.handler_function = handler_function
         self.char_encoding = char_encoding
-        if not component_type in ('Processor', 'Sink'):
+        if not component_type in StreamComponent.components:
             raise NotImplementedError("component type %s is not implemented" % component_type)
 
         self.component_type = component_type
@@ -86,6 +87,11 @@ class DefaultMessageHandler(MessageHandler):
         :param buffer_size: the buffer size.
         :return: True if success, False otherwise
         """
+
+        if self.component_type == StreamComponent.SOURCE:
+            msg = self.handler_function()
+            return self.__send(request, msg)
+
         logger = self.logger
 
         data = self.__receive(request, buffer_size)
@@ -96,10 +102,9 @@ class DefaultMessageHandler(MessageHandler):
             for message in data.split(self.TERMINATOR)[:-1]:
                 logger.debug(message)
                 result = self.handler_function(message)
-                if self.component_type == 'Processor':
+                if self.component_type == StreamComponent.PROCESSOR:
                     if not self.__send(request, result):
                         return False
-                logger.debug('next')
         return True
 
     def __receive(self, request, buffer_size):
@@ -166,7 +171,7 @@ class StxEtxHandler(MessageHandler):
                     message = message[1:]
                 logger.debug(message)
                 result = self.handler_function(bytearray(message))
-                if self.component_type == 'Processor':
+                if self.component_type == StreamComponent.PROCESSOR:
                     if not self.__send(request, result):
                         return False
         return True
@@ -257,7 +262,7 @@ class HeaderLengthHandler(MessageHandler):
 
         result = self.handler_function(msg)
 
-        if self.component_type == 'Processor':
+        if self.component_type == StreamComponent.PROCESSOR:
             return self.__send(request, result)
         return True
 

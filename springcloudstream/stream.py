@@ -34,6 +34,11 @@ import sys
 from optparse import OptionParser
 import codecs
 
+class StreamComponent:
+    components = range(3)
+    PROCESSOR, SINK, SOURCE = components
+
+
 from springcloudstream.tcp import launch_server
 from springcloudstream.messagehandler import *
 
@@ -154,7 +159,7 @@ class BaseStreamComponent:
         :return: a MessageHandler
         """
         encoder = Encoders.value(self.options.encoder)
-        component_type = self.__class__.__name__
+        component_type = self.__class__.component_type
         if encoder == None or encoder == Encoders.LF:
             return DefaultMessageHandler(handler_function, component_type, self.options.char_encoding)
         elif encoder == Encoders.STXETX:
@@ -174,6 +179,7 @@ class BaseStreamComponent:
 
 class Processor(BaseStreamComponent):
     """Stream Processor - receives and sends messages."""
+    component_type = StreamComponent.PROCESSOR
 
     def __init__(self, handler_function, args=[]):
         """
@@ -184,7 +190,8 @@ class Processor(BaseStreamComponent):
 
 
 class Sink(BaseStreamComponent):
-    """Stream Sink - receives messages only"""
+    """Stream Sink - recieves messages only"""
+    component_type = StreamComponent.SINK
 
     def __init__(self, handler_function, args=[]):
         """
@@ -195,7 +202,8 @@ class Sink(BaseStreamComponent):
 
 
 class Source(BaseStreamComponent):
-    """Stream Source - sends messages from an external pollable or event driven source """
+    """Stream Source - sends messages from an external source """
+    component_type = StreamComponent.SOURCE
 
     def __init__(self, handler_function, args=[]):
         """
