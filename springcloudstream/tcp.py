@@ -24,6 +24,7 @@ This module supports the use TCP sockets for communication between local process
 import sys
 import logging
 import threading
+import os
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
@@ -62,7 +63,11 @@ def launch_server(message_handler, options):
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Ctrl-C, exiting...")
+        os._exit(142)
 
 
 def launch_monitor_server(port, logger):
@@ -74,8 +79,6 @@ def launch_monitor_server(port, logger):
     logger.info('Starting monitor server on port %d' % port)
     server = TCPServer(('localhost', port), MonitorHandler)
     server.serve_forever()
-
-
 
 class StreamHandler(BaseRequestHandler):
     """
