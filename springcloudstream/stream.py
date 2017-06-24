@@ -89,6 +89,7 @@ class Options:
 
         self.parser.add_option('-s', '--buffer-size',
                                help='the tcp buffer size',
+                               type='int',
                                default=2048,
                                dest='buffer_size')
 

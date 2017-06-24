@@ -25,6 +25,7 @@ def upper(data):
 
 args =['--port','9999',
        '--monitor-port','9998',
+       '--buffer-size', '2048',
        '--debug','True',
        ]
 Processor(upper,args).start()
