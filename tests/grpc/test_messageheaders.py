@@ -24,6 +24,11 @@ from springcloudstream.grpc.message import MessageHeaders
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
+PYTHON3 = sys.version_info >= (3, 0)
+
+if PYTHON3:
+    long = int
+
 class MessageHeadersTest(unittest.TestCase):
 
     def test_default(self):
@@ -35,8 +40,8 @@ class MessageHeadersTest(unittest.TestCase):
         headers = MessageHeaders()
         headers['foo']='bar'
         headers['num']=13
-        self.assertEquals(13,headers['num'])
-        self.assertEquals('bar',headers['foo'])
+        self.assertEqual(13,headers['num'])
+        self.assertEqual('bar',headers['foo'])
 
     def test_immutable_values(self):
         headers = MessageHeaders()
@@ -44,28 +49,28 @@ class MessageHeadersTest(unittest.TestCase):
             headers['id']='new id'
             self.fail('should raise KeyError')
         except KeyError:
-            self.assertEquals('"key \'id\' cannot be updated"', str(sys.exc_info()[1]))
+            self.assertEqual('"key \'id\' cannot be updated"', str(sys.exc_info()[1]))
         try:
             headers['timestamp']= 0
             self.fail('should raise KeyError')
         except KeyError:
-            self.assertEquals('"key \'timestamp\' cannot be updated"', str(sys.exc_info()[1]))
+            self.assertEqual('"key \'timestamp\' cannot be updated"', str(sys.exc_info()[1]))
         try:
             del headers['id']
             self.fail('should raise KeyError')
         except KeyError:
-            self.assertEquals('"key \'id\' cannot be deleted"', str(sys.exc_info()[1]))
+            self.assertEqual('"key \'id\' cannot be deleted"', str(sys.exc_info()[1]))
         try:
             del headers['timestamp']
             self.fail('should raise KeyError')
         except KeyError:
-            self.assertEquals('"key \'timestamp\' cannot be deleted"', str(sys.exc_info()[1]))
+            self.assertEqual('"key \'timestamp\' cannot be deleted"', str(sys.exc_info()[1]))
 
 
     def test_supported_types(self):
         headers = MessageHeaders()
         headers['str'] = 'hello'
-        headers['bytes'] = bytearray('world','utf-8')
+        headers['bytes'] = bytes('world'.encode('utf-8'))
         headers['float'] = 123.0
         headers['int'] = 123
         headers['long'] = long(123)
@@ -76,16 +81,16 @@ class MessageHeadersTest(unittest.TestCase):
         try:
             headers['none'] = None
             self.fail('should raise RuntimeError')
-        except RuntimeError:
-           self.assertEquals("<type 'NoneType'> is an unsupported type", str(sys.exc_info()[1]))
+        except TypeError:
+           self.assertTrue(str(sys.exc_info()[1]).endswith("'NoneType'> is an unsupported type"))
         try:
             headers['dict'] = {'a':'a'}
             self.fail('should raise RuntimeError')
-        except RuntimeError:
+        except TypeError:
            pass
 
         try:
             headers['list'] = [1,2,3]
             self.fail('should raise RuntimeError')
-        except RuntimeError:
+        except TypeError:
            pass

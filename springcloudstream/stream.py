@@ -42,6 +42,8 @@ class StreamComponent:
 from springcloudstream.tcp import launch_server
 from springcloudstream.messagehandler import *
 
+
+#TODO: This is TCP specific
 class Encoders:
     """Named identifiers to determine which RequestHandler to use.
        CRLF - messages are terminated by '\r\n'

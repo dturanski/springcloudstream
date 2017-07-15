@@ -71,4 +71,155 @@ _sym_db.RegisterMessage(Status)
 
 DESCRIPTOR.has_options = True
 DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('\n3org.springframework.cloud.stream.app.grpc.processorB\017ProcessorProtosP\001'))
+try:
+  # THESE ELEMENTS WILL BE DEPRECATED.
+  # Please use the generated *_pb2_grpc.py files instead.
+  import grpc
+  from grpc.beta import implementations as beta_implementations
+  from grpc.beta import interfaces as beta_interfaces
+  from grpc.framework.common import cardinality
+  from grpc.framework.interfaces.face import utilities as face_utilities
+
+
+  class ProcessorStub(object):
+    # missing associated documentation comment in .proto file
+    pass
+
+    def __init__(self, channel):
+      """Constructor.
+
+      Args:
+        channel: A grpc.Channel.
+      """
+      self.Ping = channel.unary_unary(
+          '/processor.Processor/Ping',
+          request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+          response_deserializer=Status.FromString,
+          )
+      self.Process = channel.unary_unary(
+          '/processor.Processor/Process',
+          request_serializer=message__pb2.Message.SerializeToString,
+          response_deserializer=message__pb2.Message.FromString,
+          )
+
+
+  class ProcessorServicer(object):
+    # missing associated documentation comment in .proto file
+    pass
+
+    def Ping(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+    def Process(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+
+  def add_ProcessorServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+        'Ping': grpc.unary_unary_rpc_method_handler(
+            servicer.Ping,
+            request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            response_serializer=Status.SerializeToString,
+        ),
+        'Process': grpc.unary_unary_rpc_method_handler(
+            servicer.Process,
+            request_deserializer=message__pb2.Message.FromString,
+            response_serializer=message__pb2.Message.SerializeToString,
+        ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+        'processor.Processor', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+  class BetaProcessorServicer(object):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This class was generated
+    only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    # missing associated documentation comment in .proto file
+    pass
+    def Ping(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def Process(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+
+
+  class BetaProcessorStub(object):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This class was generated
+    only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    # missing associated documentation comment in .proto file
+    pass
+    def Ping(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
+      raise NotImplementedError()
+    Ping.future = None
+    def Process(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
+      raise NotImplementedError()
+    Process.future = None
+
+
+  def beta_create_Processor_server(servicer, pool=None, pool_size=None, default_timeout=None, maximum_timeout=None):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This function was
+    generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
+    request_deserializers = {
+      ('processor.Processor', 'Ping'): google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+      ('processor.Processor', 'Process'): message__pb2.Message.FromString,
+    }
+    response_serializers = {
+      ('processor.Processor', 'Ping'): Status.SerializeToString,
+      ('processor.Processor', 'Process'): message__pb2.Message.SerializeToString,
+    }
+    method_implementations = {
+      ('processor.Processor', 'Ping'): face_utilities.unary_unary_inline(servicer.Ping),
+      ('processor.Processor', 'Process'): face_utilities.unary_unary_inline(servicer.Process),
+    }
+    server_options = beta_implementations.server_options(request_deserializers=request_deserializers, response_serializers=response_serializers, thread_pool=pool, thread_pool_size=pool_size, default_timeout=default_timeout, maximum_timeout=maximum_timeout)
+    return beta_implementations.server(method_implementations, options=server_options)
+
+
+  def beta_create_Processor_stub(channel, host=None, metadata_transformer=None, pool=None, pool_size=None):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This function was
+    generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
+    request_serializers = {
+      ('processor.Processor', 'Ping'): google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+      ('processor.Processor', 'Process'): message__pb2.Message.SerializeToString,
+    }
+    response_deserializers = {
+      ('processor.Processor', 'Ping'): Status.FromString,
+      ('processor.Processor', 'Process'): message__pb2.Message.FromString,
+    }
+    cardinalities = {
+      'Ping': cardinality.Cardinality.UNARY_UNARY,
+      'Process': cardinality.Cardinality.UNARY_UNARY,
+    }
+    stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer, request_serializers=request_serializers, response_deserializers=response_deserializers, thread_pool=pool, thread_pool_size=pool_size)
+    return beta_implementations.dynamic_stub(channel, 'processor.Processor', cardinalities, options=stub_options)
+except ImportError:
+  pass
 # @@protoc_insertion_point(module_scope)

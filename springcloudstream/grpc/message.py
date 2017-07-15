@@ -15,25 +15,40 @@ Copyright 2017 the original author or authors.
 '''
 __author__ = 'David Turanski'
 
+__version__ = '1.1.0'
+
 """
 Provide support for using grpc with Spring Cloud Stream
 """
-
-import message_pb2
+import springcloudstream.grpc.message_pb2 as message_pb2
 import uuid
 import time
 import collections
+import sys
+
+FLOAT_MAX_VALUE = (2 - 2**-23) * 2**127
+FLOAT_MIN_VALUE = 2**-149
+
+PYTHON3 = sys.version_info >= (3, 0)
+
+if PYTHON3:
+    long = int
 
 
 class MessageHeaders(collections.MutableMapping):
     """
-     dict like object to enforce Spring MessageHeaders compatibility.
+     dict-like object to enforce Spring MessageHeaders compatibility.
     """
+
     def __init__(self, *args, **kwargs):
         self.__dict__.update(*args, **kwargs)
         self.__dict__['id'] = str(uuid.uuid4())
         self.__dict__['timestamp'] = int(round(time.time() * 1000))
 
+    def copy(self, headers):
+        for key, value in headers.items():
+            if not key in ['id','timestamp']:
+                self[key]=value
 
     # The next five methods are requirements of the ABC.
     def __setitem__(self, key, value):
@@ -68,14 +83,39 @@ class MessageHeaders(collections.MutableMapping):
 
 
 class Message:
+    '''
+    Implementation of a Spring Message containing standard types.
+    '''
+
+    @classmethod
+    def __from_protobuf_message__(cls, pb_message):
+        """
+        Creates a Message containing native types from a Protobuf Message containing Generic fields.
+        Preserves original timestamp and id.
+
+        :param pb_message: The Protobuf Message
+        :return: a native message
+        """
+        if not type(pb_message) == type(message_pb2.Message()):
+            raise TypeError("Unexpected type %s" %type(pb_message))
+
+        headers = MessageHeaders()
+
+        for key, value in pb_message.headers.items():
+            '''Preserve timestamp and id here'''
+            headers.__dict__[key] = __convert_from_generic__(value)
+
+        return Message(__convert_from_generic__(pb_message.payload),headers)
+
+
     def __init__(self, payload, headers=MessageHeaders()):
         if payload is None:
             raise RuntimeError("'payload cannot be None.")
         __check_supported_type__(payload)
 
-        clazz =  type(MessageHeaders())
+        clazz = type(MessageHeaders())
         if not type(headers) == clazz:
-            raise RuntimeError("%s is an unsupported type for headers. Must be %s" % (type(headers), clazz))
+            raise TypeError("%s is an unsupported type for headers. Must be %s" % (type(headers), clazz))
 
         self.headers = headers
         self.payload = payload
@@ -90,7 +130,48 @@ class Message:
         else:
             raise RuntimeError("Attribute %s undefined" % value)
 
+    def __to_protobuf_message__(self):
+        pb_message = message_pb2.Message()
+        __convert_to_generic__(pb_message.payload, self.payload)
+        for key, value in self.headers.items():
+            __convert_to_generic__(pb_message.headers[key] ,value)
+        return pb_message
+
+
 def __check_supported_type__(val):
-    supported_types = [str,bool,bytearray,float,int,long]
+    """
+    Raises an Error if parameter is not a supported type (scalar, str, or bytearray).
+    :param val: parameter of unknown type
+    :return: None
+    """
+    supported_types = [str, bool, bytes, float, int, long]
     if not supported_types.__contains__(type(val)):
-        raise RuntimeError("%s is an unsupported type" % type(val))
+        raise TypeError("%s is an unsupported type" % type(val))
+
+
+def __convert_to_generic__(generic, val):
+    result = generic
+    __check_supported_type__(val)
+    if type(val) == str:
+        result.string = val
+    elif type(val) == bytes:
+        result.bytes = val
+    elif type(val) == bool:
+        result.bool = val
+    elif type(val) == int:
+        result.int = val
+    elif type(val) == long:
+        result.long = val
+    elif type(val) == float:
+        if val > FLOAT_MAX_VALUE or val < FLOAT_MIN_VALUE:
+            result.double = val
+        else:
+            result.float = val
+
+    return result
+
+
+def __convert_from_generic__(val):
+    if not type(val) == message_pb2.Generic:
+        raise TypeError('expecting Generic type')
+    return getattr(val, val.WhichOneof('type'))
