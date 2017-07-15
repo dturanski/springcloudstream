@@ -46,8 +46,6 @@ FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
-
-
 class MessageHandler(processor_pb2_grpc.ProcessorServicer):
     """
     Message Handler for Grpc
@@ -84,11 +82,12 @@ class MessageHandler(processor_pb2_grpc.ProcessorServicer):
         :return: response message
         """
         logger.debug(request)
+        logger.debug('payload type: %s' % type(request.payload.string))
         message = Message.__from_protobuf_message__(request)
         sig = getfullargspec(self.handler_function)
-        if len(sig.args == 2):
+        if len(sig.args) == 2:
             result = self.handler_function(message.payload, message.headers)
-        elif len(sig.args == 1):
+        elif len(sig.args) == 1:
             result = self.handler_function(message.payload)
         else:
             raise RuntimeError('wrong number of arguments for handler function - must be 1 or 2')

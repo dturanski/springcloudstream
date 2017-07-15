@@ -24,15 +24,30 @@ import springcloudstream.grpc.message_pb2 as message_pb2
 import uuid
 import time
 import collections
+import logging
 import sys
 
 FLOAT_MAX_VALUE = (2 - 2**-23) * 2**127
 FLOAT_MIN_VALUE = 2**-149
+INT_MAX_VALUE = 2**31 -1
+INT_MIN_VALUE = -2**32
 
 PYTHON3 = sys.version_info >= (3, 0)
 
 if PYTHON3:
     long = int
+    def __is_str_type__(val):
+        return isinstance(val,str)
+else:
+    def __is_str_type__(val):
+        return isinstance(val, basestring)
+
+
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
+logging.basicConfig(format=FORMAT, level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("Python version %s" % str(sys.version_info) )
 
 
 class MessageHeaders(collections.MutableMapping):
@@ -43,7 +58,7 @@ class MessageHeaders(collections.MutableMapping):
     def __init__(self, *args, **kwargs):
         self.__dict__.update(*args, **kwargs)
         self.__dict__['id'] = str(uuid.uuid4())
-        self.__dict__['timestamp'] = int(round(time.time() * 1000))
+        self.__dict__['timestamp'] = long(round(time.time() * 1000))
 
     def copy(self, headers):
         for key, value in headers.items():
@@ -96,8 +111,6 @@ class Message:
         :param pb_message: The Protobuf Message
         :return: a native message
         """
-        if not type(pb_message) == type(message_pb2.Message()):
-            raise TypeError("Unexpected type %s" %type(pb_message))
 
         headers = MessageHeaders()
 
@@ -144,22 +157,29 @@ def __check_supported_type__(val):
     :param val: parameter of unknown type
     :return: None
     """
+    if __is_str_type__(val):
+        return True
     supported_types = [str, bool, bytes, float, int, long]
     if not supported_types.__contains__(type(val)):
-        raise TypeError("%s is an unsupported type" % type(val))
+        raise TypeError("%s is an unsupported type (%s)" % (type(val),val))
+
+    return True
 
 
 def __convert_to_generic__(generic, val):
     result = generic
     __check_supported_type__(val)
-    if type(val) == str:
+    if __is_str_type__(val):
         result.string = val
     elif type(val) == bytes:
         result.bytes = val
     elif type(val) == bool:
         result.bool = val
     elif type(val) == int:
-        result.int = val
+        if val >= INT_MIN_VALUE and val <= INT_MAX_VALUE:
+            result.int = val
+        else:
+            result.long = val
     elif type(val) == long:
         result.long = val
     elif type(val) == float:
@@ -172,6 +192,4 @@ def __convert_to_generic__(generic, val):
 
 
 def __convert_from_generic__(val):
-    if not type(val) == message_pb2.Generic:
-        raise TypeError('expecting Generic type')
     return getattr(val, val.WhichOneof('type'))
