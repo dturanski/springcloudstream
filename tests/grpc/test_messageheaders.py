@@ -19,15 +19,12 @@ __author__ = 'David Turanski'
 import os
 import sys
 import unittest
-from springcloudstream.grpc.message import MessageHeaders
 
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-PYTHON3 = sys.version_info >= (3, 0)
-
-if PYTHON3:
-    long = int
+from springcloudstream.grpc.message import MessageHeaders
+from springcloudstream.portability import long
 
 class MessageHeadersTest(unittest.TestCase):
 
@@ -82,7 +79,7 @@ class MessageHeadersTest(unittest.TestCase):
             headers['none'] = None
             self.fail('should raise RuntimeError')
         except TypeError:
-           self.assertTrue(str(sys.exc_info()[1]).endswith("'NoneType'> is an unsupported type"))
+            self.assertTrue(str(sys.exc_info()[1]).__contains__("'NoneType'> is an unsupported type"))
         try:
             headers['dict'] = {'a':'a'}
             self.fail('should raise RuntimeError')

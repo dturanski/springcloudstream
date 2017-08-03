@@ -16,7 +16,7 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
-__version__ = '1.1.0'
+__version__ = '1.0.0'
 
 """
 This module contains stream components to act as the main entry point for this library. The stream components are

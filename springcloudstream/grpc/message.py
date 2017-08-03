@@ -20,28 +20,19 @@ __version__ = '1.1.0'
 """
 Provide support for using grpc with Spring Cloud Stream
 """
-import springcloudstream.grpc.message_pb2 as message_pb2
-import uuid
-import time
 import collections
 import logging
 import sys
+import time
+import uuid
+import springcloudstream.proto.message_pb2 as message_pb2
+from springcloudstream.portability import long, __is_str_type__
+
 
 FLOAT_MAX_VALUE = (2 - 2**-23) * 2**127
 FLOAT_MIN_VALUE = 2**-149
 INT_MAX_VALUE = 2**31 -1
 INT_MIN_VALUE = -2**32
-
-PYTHON3 = sys.version_info >= (3, 0)
-
-if PYTHON3:
-    long = int
-    def __is_str_type__(val):
-        return isinstance(val,str)
-else:
-    def __is_str_type__(val):
-        return isinstance(val, basestring)
-
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)

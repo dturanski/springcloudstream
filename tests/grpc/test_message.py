@@ -18,19 +18,16 @@ __author__ = 'David Turanski'
 import os
 import sys
 import unittest
-from springcloudstream.grpc.message import Message, MessageHeaders,__convert_from_generic__,__convert_to_generic__,\
-    FLOAT_MIN_VALUE,FLOAT_MAX_VALUE
-
-import springcloudstream.grpc.message_pb2
-from springcloudstream.grpc.message_pb2 import Generic
 
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-PYTHON3 = sys.version_info >= (3, 0)
+from springcloudstream.portability import long
+import springcloudstream.proto.message_pb2
+from springcloudstream.grpc.message import Message, MessageHeaders, __convert_from_generic__, __convert_to_generic__, \
+    FLOAT_MIN_VALUE, FLOAT_MAX_VALUE
+from springcloudstream.proto.message_pb2 import Generic
 
-if PYTHON3:
-    long = int
 
 class MessageTest(unittest.TestCase):
     def test_default(self):
@@ -94,7 +91,7 @@ class MessageTest(unittest.TestCase):
         do_test(FLOAT_MAX_VALUE + 0.1)
 
     def test_from_protobuf_message(self):
-        pb_message = springcloudstream.grpc.message_pb2.Message()
+        pb_message = springcloudstream.proto.message_pb2.Message()
         pb_message.payload.string = 'greetings'
         pb_message.headers['id'].string ='id1'
         pb_message.headers['timestamp'].long = long(9999999)
@@ -115,8 +112,3 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(123, message.headers['int'])
         self.assertEqual(long(123), message.headers['long'])
         self.assertEqual(True, message.headers['bool'])
-
-        converted = message.__to_protobuf_message__()
-
-
-

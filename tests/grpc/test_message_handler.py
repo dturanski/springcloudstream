@@ -18,22 +18,12 @@ __author__ = 'David Turanski'
 import os
 import sys
 import unittest
-from springcloudstream.grpc.message import Message, MessageHeaders,__convert_from_generic__,__convert_to_generic__,\
-    FLOAT_MIN_VALUE,FLOAT_MAX_VALUE
 
-import springcloudstream.grpc.message_pb2
-from springcloudstream.grpc.message_pb2 import Generic
 
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-PYTHON3 = sys.version_info >= (3, 0)
-
-if PYTHON3:
-    long = int
-    from inspect import getfullargspec
-else:
-    from inspect import getargspec as getfullargspec
+from springcloudstream.portability import getfullargspec
 
 class MessageHandlerTest(unittest.TestCase):
 

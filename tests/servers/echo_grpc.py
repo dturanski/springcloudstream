@@ -19,7 +19,6 @@ import os,sys
 sys.path.append(os.path.abspath('./springcloudstream/grpc'))
 sys.path.append(os.path.abspath('.'))
 
-
 from springcloudstream.grpc.stream import Processor
 
 def echo(data):

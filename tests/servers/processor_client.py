@@ -15,15 +15,17 @@ Copyright 2017 the original author or authors.
 '''
 __author__ = 'David Turanski'
 
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.abspath('./springcloudstream/grpc'))
 sys.path.append(os.path.abspath('.'))
 import grpc
-from springcloudstream.grpc.message_pb2 import Message
+from springcloudstream.proto.message_pb2 import Message
 from springcloudstream.grpc.message import __convert_to_generic__
 
-from springcloudstream.grpc.processor_pb2_grpc import ProcessorStub
+from springcloudstream.proto.processor_pb2_grpc import ProcessorStub
+from springcloudstream.portability import long
 
 
 def run():

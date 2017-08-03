@@ -16,31 +16,24 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
-__version__ = '1.1.0'
+__version__ = '1.0.0'
 
 """
 Implementations of MessageHandler used by stream components.
 """
-import sys
-import time
 import logging
-from springcloudstream.grpc.stream_component import StreamComponent
-from springcloudstream.grpc.message import Message, MessageHeaders
-import springcloudstream.grpc.processor_pb2 as processor_pb2
-import springcloudstream.grpc.processor_pb2_grpc as processor_pb2_grpc
+import time
 import grpc
 from concurrent import futures
 
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-PYTHON3 = sys.version_info >= (3, 0)
+from springcloudstream.portability import getfullargspec
+import springcloudstream.proto.processor_pb2 as processor_pb2
+import springcloudstream.proto.processor_pb2_grpc as processor_pb2_grpc
+from springcloudstream.grpc.message import Message, MessageHeaders
+from springcloudstream.grpc.stream_component import StreamComponent
 
-if PYTHON3:
-    long = int
-    from inspect import getfullargspec
-else:
-    from inspect import getargspec as getfullargspec
-
+__ONE_DAY_IN_SECONDS__ = 60*60*24
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
@@ -62,13 +55,16 @@ class MessageHandler(processor_pb2_grpc.ProcessorServicer):
 
         self.component_type = component_type
 
-
     def Ping(self, request, context):
-        # missing associated documentation comment in .proto file
-        pass
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        """
+        Invoke the Server health endpoint
+        :param request: Empty
+        :param context: the request context
+        :return: Status message 'alive'
+        """
+        status =  processor_pb2.Status()
+        status.message='alive'
+        return status
 
     def Process(self, request, context):
         """
@@ -82,7 +78,6 @@ class MessageHandler(processor_pb2_grpc.ProcessorServicer):
         :return: response message
         """
         logger.debug(request)
-        logger.debug('payload type: %s' % type(request.payload.string))
         message = Message.__from_protobuf_message__(request)
         sig = getfullargspec(self.handler_function)
         if len(sig.args) == 2:
@@ -90,6 +85,8 @@ class MessageHandler(processor_pb2_grpc.ProcessorServicer):
         elif len(sig.args) == 1:
             result = self.handler_function(message.payload)
         else:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details('wrong number of arguments for handler function - must be 1 or 2')
             raise RuntimeError('wrong number of arguments for handler function - must be 1 or 2')
 
         if self.component_type == StreamComponent.PROCESSOR:
@@ -106,20 +103,24 @@ class MessageHandler(processor_pb2_grpc.ProcessorServicer):
 logger = logging.getLogger(__name__)
 
 class Server:
+    """
+    gRPC Server
+    """
 
     def start(self, options, handler_function, component_type):
 
         if options.debug:
             logger.setLevel(logging.DEBUG)
 
+        logger.info("starting server %s" % options)
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=options.thread_pool_size),maximum_concurrent_rpcs=options.max_concurrent_rpcs)
-        processor_pb2.add_ProcessorServicer_to_server(MessageHandler(handler_function,component_type), server)
+        processor_pb2.add_ProcessorServicer_to_server(MessageHandler(handler_function, component_type), server)
         server.add_insecure_port('[::]:%d' % options.port)
         server.start()
         logger.info("server started %s" % options)
 
         try:
             while True:
-                time.sleep(_ONE_DAY_IN_SECONDS)
+                time.sleep(__ONE_DAY_IN_SECONDS__)
         except KeyboardInterrupt:
             server.stop(0)

@@ -1,4 +1,4 @@
-"""
+__copyright__ = '''
 Copyright 2017 the original author or authors.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,22 @@ Copyright 2017 the original author or authors.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-"""
-import os,sys
-sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('.'))
+'''
+__author__ = 'David Turanski'
 
 
-from springcloudstream.stream import Processor
+import sys
+import inspect
 
-def upper(data):
-    return data.upper()
+PYTHON3 = sys.version_info >= (3, 0)
 
-args =['--port','9999',
-       '--monitor-port','9998',
-       '--debug','True',
-       '--encoder','L2']
-Processor(upper, args).start()
+if PYTHON3:
+    long = int
+    getfullargspec = inspect.getfullargspec
+    def __is_str_type__(val):
+        return isinstance(val,str)
+else:
+    long = long
+    getfullargspec = inspect.getargspec
+    def __is_str_type__(val):
+        return isinstance(val, basestring)
