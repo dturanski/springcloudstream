@@ -15,7 +15,7 @@ Copyright 2017 the original author or authors.
 '''
 __author__ = 'David Turanski'
 
-__version__ = '1.1.0'
+__version__ = '1.0.0'
 
 """
 Provide support for using grpc with Spring Cloud Stream

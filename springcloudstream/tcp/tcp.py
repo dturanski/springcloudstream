@@ -15,7 +15,7 @@ Copyright 2017 the original author or authors.
 """
 __author__ = 'David Turanski'
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 """
 This module supports the use TCP sockets for communication between local processes.  

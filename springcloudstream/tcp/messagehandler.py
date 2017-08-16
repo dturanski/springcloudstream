@@ -16,7 +16,7 @@ Copyright 2017 the original author or authors.
 
 __author__ = 'David Turanski'
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 """
 Implementations of MessageHandler used by stream components.
