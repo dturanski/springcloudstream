@@ -24,7 +24,7 @@ Implementations of MessageHandler used by stream components.
 
 import struct
 from array import array
-from springcloudstream.tcp.stream import StreamComponent
+from springcloudstream.stream_component import StreamComponent
 
 
 def rindex(iterable, value):

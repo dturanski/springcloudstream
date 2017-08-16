@@ -28,4 +28,5 @@ args =['--port','9999',
        '--buffer-size', '2048',
        '--debug','True'
        ]
-Processor(upper,args).start()
+
+Processor(upper, sys.argv if sys.argv else args).start()

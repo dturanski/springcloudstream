@@ -33,10 +33,7 @@ For a Source, a no argument function that returns a value (<str>, or bytes-like)
 import sys
 from optparse import OptionParser
 import codecs
-
-class StreamComponent:
-    components = range(3)
-    PROCESSOR, SINK, SOURCE = components
+from springcloudstream.stream_component import StreamComponent
 
 
 from springcloudstream.tcp.tcp import launch_server
