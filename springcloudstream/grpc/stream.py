@@ -30,11 +30,12 @@ For a Sink, a two argument(payload, header) function, the return value is ignore
 For a Source, a no argument function that returns a Message or payload.
 """
 
+import logging
 import sys
 from optparse import OptionParser
-import logging
-from springcloudstream.grpc.stream_component import StreamComponent
+
 from springcloudstream.grpc.messagehandler import Server
+from springcloudstream.stream_component import StreamComponent
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)

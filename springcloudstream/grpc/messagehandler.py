@@ -23,15 +23,15 @@ Implementations of MessageHandler used by stream components.
 """
 import logging
 import time
-import grpc
 from concurrent import futures
 
+import grpc
 
-from springcloudstream.portability import getfullargspec
 import springcloudstream.proto.processor_pb2 as processor_pb2
 import springcloudstream.proto.processor_pb2_grpc as processor_pb2_grpc
 from springcloudstream.grpc.message import Message, MessageHeaders
-from springcloudstream.grpc.stream_component import StreamComponent
+from springcloudstream.portability import getfullargspec
+from springcloudstream.stream_component import StreamComponent
 
 __ONE_DAY_IN_SECONDS__ = 60*60*24
 

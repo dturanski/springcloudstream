@@ -21,8 +21,8 @@ import subprocess
 import signal
 import time
 import unittest
-
 import grpc
+
 from google.protobuf.empty_pb2 import Empty
 from springcloudstream.proto.message_pb2 import Message
 from springcloudstream.proto.processor_pb2_grpc import ProcessorStub
@@ -39,11 +39,11 @@ if PYTHON3:
 
 def servers_root():
     if os.getcwd().endswith('springcloudstream'):
-        return '%s/tests/servers' % os.getcwd()
-    elif os.getcwd().endswith('grpc'):
-        return '%s/../servers' % os.getcwd()
-    else:
-        return '.'
+        return '%s/tests/grpctest/servers' % os.getcwd()
+    elif os.getcwd().endswith('grpctest'):
+        return '%s/servers' % os.getcwd()
+    elif os.getcwd().endswith("tests"):
+        return '%s/grpctest/servers' % os.getcwd()
 
 
 class GrpcServerTest(unittest.TestCase):
