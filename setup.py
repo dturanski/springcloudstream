@@ -2,8 +2,8 @@
 from setuptools import setup, find_packages
 setup(name='springcloudstream',
       version='1.0.1',
-      test_suite='tests.grpc.suite',
-      description='A module to support invocation of remote Python applications via gRPC using Spring Cloud Stream',
+      test_suite='tests.suite',
+      description='A module to support invocation of remote Python applications using Spring Cloud Stream',
       author='David Turanski',
       author_email='dturanski@pivotal.io',
       url = 'https://github.com/dturanski/springcloudstream',

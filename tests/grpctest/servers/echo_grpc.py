@@ -16,8 +16,8 @@ Copyright 2017 the original author or authors.
 __author__ = 'David Turanski'
 
 import os,sys
-sys.path.append(os.path.abspath('./springcloudstream/grpc'))
-sys.path.append(os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
 from springcloudstream.grpc.stream import Processor
 
