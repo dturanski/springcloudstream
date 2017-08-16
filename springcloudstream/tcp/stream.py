@@ -33,7 +33,7 @@ For a Source, a no argument function that returns a value (<str>, or bytes-like)
 import sys
 from optparse import OptionParser
 import codecs
-from springcloudstream.stream_component import StreamComponent
+from springcloudstream.component import StreamComponent
 
 
 from springcloudstream.tcp.tcp import launch_server

@@ -35,7 +35,7 @@ import sys
 from optparse import OptionParser
 
 from springcloudstream.grpc.messagehandler import Server
-from springcloudstream.stream_component import StreamComponent
+from springcloudstream.component import StreamComponent
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
