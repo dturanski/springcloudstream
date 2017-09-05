@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(name='springcloudstream',
       version='1.1.0',
       test_suite='tests.suite',
-      description='A module to support invocation of remote Python applications using Spring Cloud Stream',
+      description='A module to support invocation of remote Python applications via Spring Cloud Stream',
       author='David Turanski',
       author_email='dturanski@pivotal.io',
       url = 'https://github.com/dturanski/springcloudstream',
