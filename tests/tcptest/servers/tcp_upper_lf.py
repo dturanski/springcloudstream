@@ -29,4 +29,4 @@ args =['--port','9999',
        '--debug','True'
        ]
 
-Processor(upper, sys.argv if sys.argv else args).start()
+Processor(upper, args).start()

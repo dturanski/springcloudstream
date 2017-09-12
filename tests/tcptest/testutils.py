@@ -25,7 +25,7 @@ import time
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-HOST, PORT = "localhost", 9999
+HOST, PORT = socket.gethostname(), 9999
 
 PYTHON3 = sys.version_info >= (3, 0)
 

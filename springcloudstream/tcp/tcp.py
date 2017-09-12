@@ -25,6 +25,7 @@ import sys
 import logging
 import threading
 import os
+import socket
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
@@ -56,7 +57,7 @@ def launch_server(message_handler, options):
         # Create the server, binding to localhost on configured port
     logger.info(
         'Starting server on port %d Python version %s.%s.%s' % ((options.port,) + sys.version_info[:3]))
-    server = TCPServer(('localhost', options.port),
+    server = TCPServer((socket.gethostname(), options.port),
                        StreamHandler.create_handler(message_handler,
                                                     options.buffer_size,
                                                     logger))
@@ -77,7 +78,7 @@ def launch_monitor_server(port, logger):
     :param logger: the logger
     """
     logger.info('Starting monitor server on port %d' % port)
-    server = TCPServer(('localhost', port), MonitorHandler)
+    server = TCPServer((socket.gethostname(), port), MonitorHandler)
     server.serve_forever()
 
 class StreamHandler(BaseRequestHandler):
