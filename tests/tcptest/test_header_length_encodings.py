@@ -29,7 +29,7 @@ class BaseTestCases:
 
         def test_ping(self):
             try:
-                sock = self.create_socket(9998)
+                sock = self.create_socket(port=9998)
                 sock.sendall("ping\n".encode('utf-8'))
                 result = sock.recv(80)
                 result = result.decode('utf-8')
