@@ -52,12 +52,13 @@ def launch_server(message_handler, options):
         logger.warn(
             "Monitoring not enabled. No monitor-port option defined.")
     else:
-        threading.Thread(target=launch_monitor_server, args=(options.monitor_port, logger)).start()
+        threading.Thread(target=launch_monitor_server, args=(options.host, options.monitor_port, logger)).start()
 
-        # Create the server, binding to localhost on configured port
+    # Create the server, binding to specified host on configured port
+
     logger.info(
-        'Starting server on port %d Python version %s.%s.%s' % ((options.port,) + sys.version_info[:3]))
-    server = TCPServer((socket.gethostname(), options.port),
+        'Starting server on host %s port %d Python version %s.%s.%s' % ((options.host, options.port) + sys.version_info[:3]))
+    server = TCPServer((options.host, options.port),
                        StreamHandler.create_handler(message_handler,
                                                     options.buffer_size,
                                                     logger))
@@ -71,14 +72,14 @@ def launch_server(message_handler, options):
         os._exit(142)
 
 
-def launch_monitor_server(port, logger):
+def launch_monitor_server(host, port, logger):
     """
     Launch a monitor server
     :param port: the monitor port
     :param logger: the logger
     """
-    logger.info('Starting monitor server on port %d' % port)
-    server = TCPServer((socket.gethostname(), port), MonitorHandler)
+    logger.info('Starting monitor server on host %s port %d' % (host, port))
+    server = TCPServer((host, port), MonitorHandler)
     server.serve_forever()
 
 class StreamHandler(BaseRequestHandler):

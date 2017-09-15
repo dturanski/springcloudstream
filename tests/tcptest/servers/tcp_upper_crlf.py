@@ -25,6 +25,7 @@ def upper(data):
     return data.upper()
 
 args =['--port','9999',
+       '--host', 'localhost',
        '--monitor-port','9998',
        '--debug','True',
        '--encoder','CRLF'

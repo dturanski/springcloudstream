@@ -33,6 +33,7 @@ For a Source, a no argument function that returns a value (<str>, or bytes-like)
 import sys
 from optparse import OptionParser
 import codecs
+import socket
 from springcloudstream.component import StreamComponent
 
 
@@ -84,6 +85,10 @@ class Options:
                                help='the socket to use for the monitoring server',
                                dest='monitor_port')
 
+        self.parser.add_option('', '--host',
+                               help='the hostname or IP to use for the server - default is socket.socket.gethostname()',
+                               dest='host')
+
         self.parser.add_option('-s', '--buffer-size',
                                help='the tcp buffer size',
                                type='int',
@@ -128,6 +133,9 @@ class Options:
         except LookupError:
             print("invalid 'char-encoding' %s" % self.options.char_encoding)
             sys.exit(2)
+
+        if not self.options.host:
+           self.options.host = socket.gethostname()
 
 
 class BaseStreamComponent:

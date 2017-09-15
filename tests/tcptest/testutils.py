@@ -61,8 +61,9 @@ class TcpTestCase(unittest.TestCase):
         elif os.getcwd().endswith("tests"):
             return '%s/tcptest/servers' % os.getcwd()
 
-    def create_socket(self, port=PORT):
+    def create_socket(self,host=HOST, port=PORT, **kwargs):
         # Create a socket (SOCK_STREAM means a TCP socket)
+        print(host)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((HOST, port))
+        sock.connect((host, port))
         return sock

@@ -31,7 +31,7 @@ class TestTcp(TcpTestCase):
     def test_random_data(self):
 
         try:
-            sock = self.create_socket()
+            sock = self.create_socket(host='localhost')
             # Connect to server and send data
             for i in range(10):
                 self.sendAndRecieve(sock, random_data(10))
@@ -44,7 +44,7 @@ class TestTcp(TcpTestCase):
     def test_multi_data(self):
         # Create a socket (SOCK_STREAM means a TCP socket)
         try:
-            sock = self.create_socket()
+            sock = self.create_socket(host='localhost')
             sock.sendall("hello\r\nworld\r\n".encode('utf-8'))
             result = sock.recv(1024)
             result = result.decode('utf-8')
