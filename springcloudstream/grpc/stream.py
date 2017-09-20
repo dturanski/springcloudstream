@@ -59,6 +59,9 @@ class Options:
                                type='int',
                                help='the socket port to use',
                                dest='port')
+        self.parser.add_option('', '--host',
+                               help='the hostname or IP to use for the server - default is [::]',
+                               dest='host')
 
         self.parser.add_option('-t', '--thread-pool-size',
                                type='int',

@@ -54,7 +54,7 @@ class GrpcServerTest(unittest.TestCase):
         cls.process = subprocess.Popen(command,
             shell=True, preexec_fn=os.setsid
         )
-        time.sleep(2.0)
+        time.sleep(2)
 
         channel = grpc.insecure_channel('localhost:%d' % PORT)
         cls.processor = ProcessorStub(channel)

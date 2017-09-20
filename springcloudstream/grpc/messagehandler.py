@@ -115,7 +115,8 @@ class Server:
         logger.info("starting server %s" % options)
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=options.thread_pool_size),maximum_concurrent_rpcs=options.max_concurrent_rpcs)
         processor_pb2.add_ProcessorServicer_to_server(MessageHandler(handler_function, component_type), server)
-        server.add_insecure_port('[::]:%d' % options.port)
+        host = options.host if (options.host) else '[::]'
+        server.add_insecure_port('%s:%d' % (host, options.port))
         server.start()
         logger.info("server started %s" % options)
 

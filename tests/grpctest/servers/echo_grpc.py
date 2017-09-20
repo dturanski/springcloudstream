@@ -24,7 +24,8 @@ from springcloudstream.grpc.stream import Processor
 def echo(data):
     return data
 
-args =['--port','9999',
+args =[
+       '--port','9999',
        '--debug','True',
        ]
 Processor(echo,args).start()
