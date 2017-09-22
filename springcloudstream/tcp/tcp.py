@@ -33,9 +33,13 @@ logging.basicConfig(format=FORMAT, level=logging.INFO)
 PYTHON3 = sys.version_info >= (3, 0)
 
 if PYTHON3:
-    from socketserver import BaseRequestHandler, TCPServer
+    from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
+
 else:
-    from SocketServer import BaseRequestHandler, TCPServer
+    from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixin
+
+class ThreadedTCPServer(ThreadingMixIn, TCPServer):
+        pass
 
 
 def launch_server(message_handler, options):
@@ -58,7 +62,7 @@ def launch_server(message_handler, options):
 
     logger.info(
         'Starting server on host %s port %d Python version %s.%s.%s' % ((options.host, options.port) + sys.version_info[:3]))
-    server = TCPServer((options.host, options.port),
+    server = ThreadedTCPServer((options.host, options.port),
                        StreamHandler.create_handler(message_handler,
                                                     options.buffer_size,
                                                     logger))
@@ -79,7 +83,7 @@ def launch_monitor_server(host, port, logger):
     :param logger: the logger
     """
     logger.info('Starting monitor server on host %s port %d' % (host, port))
-    server = TCPServer((host, port), MonitorHandler)
+    server = ThreadedTCPServer((host, port), MonitorHandler)
     server.serve_forever()
 
 class StreamHandler(BaseRequestHandler):
