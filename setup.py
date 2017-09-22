@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 setup(name='springcloudstream',
-      version='1.1.4',
+      version='1.1.5',
       test_suite='tests.suite',
       description='A module to support invocation of remote Python applications via Spring Cloud Stream',
       author='David Turanski',
