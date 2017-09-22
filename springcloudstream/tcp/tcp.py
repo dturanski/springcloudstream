@@ -36,7 +36,8 @@ if PYTHON3:
     from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 
 else:
-    from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixin
+    from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
+
 
 class ThreadedTCPServer(ThreadingMixIn, TCPServer):
         pass
