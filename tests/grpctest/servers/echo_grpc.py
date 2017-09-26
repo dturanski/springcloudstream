@@ -26,6 +26,6 @@ def echo(data):
 
 args =[
        '--port','9999',
-       '--debug','True',
+       '--debug'
        ]
 Processor(echo,args).start()

@@ -88,8 +88,7 @@ class Options:
         Validate the options or exit()
         """
         if not self.options.port:
-            print("'port' is required")
-            sys.exit(2)
+            self.parser.error("'port' is required")
 
 
 class BaseStreamComponent:

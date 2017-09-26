@@ -18,9 +18,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
-
 test_loader = unittest.defaultTestLoader
-
 test_suite = test_loader.discover('.')
 runner=unittest.TextTestRunner()
 runner.run(test_suite)

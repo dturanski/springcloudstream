@@ -1,5 +1,5 @@
-__copyright__ = '''
-Copyright 2017 the original author or authors.
+__copyright__ = """
+Copyright 2016 the original author or authors.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,26 +12,15 @@ Copyright 2017 the original author or authors.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-'''
-__author__ = 'David Turanski'
-
-import struct
-import os,sys
+"""
+import unittest
+import os
+import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-
-from springcloudstream.tcp.stream import Processor
-
-
-def multiply(data):
-    vals = struct.unpack('!if',data)
-    return struct.pack('f',vals[0]*vals[1])
-
-args =['--port','9999',
-       '--monitor-port','9998',
-       '--debug',
-       '--encoder','STXETX'
-       ]
-
-Processor(multiply,args).start()
+test_loader = unittest.defaultTestLoader
+rel = os.path.relpath(os.path.dirname(__file__),os.path.abspath('.'))
+test_suite = test_loader.discover('.')
+runner=unittest.TextTestRunner()
+runner.run(test_suite)

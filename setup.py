@@ -1,13 +1,22 @@
 #!/usr/bin/env python
+
 from setuptools import setup, find_packages
+import unittest
+
+def setup_test_suite():
+    test_loader = unittest.TestLoader()
+    test_suite = test_loader.discover('tests', pattern='test_*.py')
+    return test_suite
+
+
 setup(name='springcloudstream',
-      version='1.1.5',
-      test_suite='tests.suite',
-      description='A module to support invocation of remote Python applications via Spring Cloud Stream',
+      version='1.1.6',
+      test_suite='__main__.setup_test_suite',
+      description='A package to support invocation of remote Python applications via Spring Cloud Stream',
       author='David Turanski',
       author_email='dturanski@pivotal.io',
       url = 'https://github.com/dturanski/springcloudstream',
-      packages=find_packages(exclude=['tests', 'tests.*']),
+      packages=find_packages(exclude=['tests', 'tests.*', 'stdiotests','stdiotests.*']),
       license='Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)',
       classifiers=[
           # How mature is this project? Common values are
@@ -34,5 +43,5 @@ setup(name='springcloudstream',
       ],
       install_requires=['grpcio'],  # external packages as dependencies
       ext_modules=[],
-      tests_require=['mock', 'unittest2']
+      tests_require=['mock', 'unittest2'],
       )

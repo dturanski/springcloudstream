@@ -13,38 +13,25 @@ Copyright 2017 the original author or authors.
    See the License for the specific language governing permissions and
    limitations under the License.
 '''
-
 __author__ = 'David Turanski'
 
-__version__ = '1.1.0'
-
-"""
-This module contains stream components to act as the main entry point for this library. The stream components are
-Processor - supports receive/send messaging
-Sink - support receive only messaging
-Source - supports send only messaging
-
-Each stream component requires a handler function: 
-For a Processor,  a single argument(<str>, or bytes-like) function that returns a value (<str>, or bytes-like).
-For a Sink, a single argument(<str>, or bytes-like) function, the return value is ignored
-For a Source, a no argument function that returns a value (<str>, or bytes-like).
-"""
+import os
 import codecs
-import socket
+import time
 from springcloudstream.options import OptionsParser
 from springcloudstream.component import BaseStreamComponent
-from springcloudstream.tcp.tcp import launch_server
-from springcloudstream.tcp.messagehandler import *
+from springcloudstream.stdio.messagehandler import *
+import logging
 
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
+logger = logging.getLogger(__name__)
 
-class TCPOptionsParser(OptionsParser):
+class StdioOptionsParser(OptionsParser):
     """
     Encapsulates on OptionParser to handle options for BaseStreamComponent. Supported options include:
 
     -h, --help            show this help message and exit
-    -p PORT, --port=PORT  the socket port to use (required)
-    -m MONITOR_PORT, --monitor-port=MONITOR_PORT (strongly advised)
-                        the socket to use for the monitoring server
+
     -s BUFFER_SIZE, --buffer-size=BUFFER_SIZE (optional, default is 2048)
                         the tcp buffer size
     -d, --debug           turn on debug logging
@@ -53,90 +40,109 @@ class TCPOptionsParser(OptionsParser):
     -e ENCODER, --encoder=ENCODER (optional, default is 'CR')
                         The name of the encoder to use for delimiting messages
     """
+
     def __init__(self):
         OptionsParser.__init__(self)
 
-        self.add_option('-p', '--port',
-                               type='int',
-                               help='the socket port to use',
-                               dest='port')
-        self.add_option('-m', '--monitor-port',
-                               type='int',
-                               help='the socket to use for the monitoring server',
-                               dest='monitor_port')
-
-        self.add_option('', '--host',
-                               help='the hostname or IP to use for the server - default is socket.socket.gethostname()',
-                               dest='host')
-
-        self.add_option('-s', '--buffer-size',
-                               help='the socket receive buffer size',
-                               type='int',
-                               default=2048,
-                               dest='buffer_size')
-
-        self.add_option('-d', '--debug',
-                               action='store_true',
-                               help='turn on debug logging',
-                               default=False,
-                               dest='debug')
+       # self.add_option('-s', '--buffer-size',
+       #                 help='the tcp buffer size',
+       #                 type='int',
+       #                 default=2048,
+       #                 dest='buffer_size')
 
         self.add_option('-c', '--char-encoding',
-                               help='character encoding',
-                               default='utf-8',
-                               dest='char_encoding')
+                        help='character encoding',
+                        default='utf-8',
+                        dest='char_encoding')
 
         self.add_option('-e', '--encoder',
-                               type="choice",
-                               choices=['LF', 'CRLF', 'STXETX', 'L4', 'L2', 'L1'],
-                               help='The name of the encoder to use for delimiting messages',
-                               default='LF',
-                               dest='encoder')
+                        type="choice",
+                        choices=['LF', 'CRLF', 'STXETX', 'L4', 'L2', 'L1'],
+                        help='The name of the encoder to use for delimiting messages',
+                        default='LF',
+                        dest='encoder')
 
-    def validate(self,options):
+        self.add_option('-d', '--debug',
+                        action='store_true',
+                        help='turn on debug logging',
+                        default=False,
+                        dest='debug')
+
+    def validate(self, options):
         """
         Validate the options or exit()
         """
-        if not options.port:
-            self.parser.error("'port' is required")
-        if options.port == options.monitor_port:
-            self.parser.error("'port' and 'monitor-port' must not be the same.")
-        if options.buffer_size <= 0:
-            self.parser.error("'buffer_size' must be > 0.")
+        #if options.buffer_size <= 0:
+        #    self.parser.error("'buffer_size' must be > 0.")
         try:
             codecs.getencoder(options.char_encoding)
         except LookupError:
             self.parser.error("invalid 'char-encoding' %s" % options.char_encoding)
 
-        if not options.host:
-           options.host = socket.gethostname()
+options_parser = StdioOptionsParser()
+
+def launch_server(message_handler, options):
+    """
+    Launch a message server
+    :param handler_function: The handler function to execute for each message
+    :param options: Application options for TCP, etc.
+    """
+    logger = logging.getLogger(__name__)
+ #   if (options.debug):
+ #       logger.setLevel(logging.DEBUG)
+
+#    if not options.monitor_port:
+#        logger.warning(
+#            "Monitoring not enabled. No monitor-port option defined.")
+#    else:
+#        threading.Thread(target=launch_monitor_server, args=(options.host, options.monitor_port, logger)).start()
+
+    # Create the server, binding to specified host on configured port
+
+#   logger.info(
+#        'Starting server on host %s port %d Python version %s.%s.%s' % ((options.host, options.port) + sys.version_info[:3]))
+#    server = ThreadedTCPServer((options.host, options.port),
+
+    # Activate the server; this will keep running until you
+    # interrupt the program with Ctrl-C
+    try:
+        while True:
+            logger.debug('waiting for more data')
+            if not message_handler.handle():
+                break
+        logger.warning("I/O stream closed from client")
+
+    except KeyboardInterrupt:
+        logger.info("I/O stream closed from client exiting...")
+        os._exit(142)
+
+    except:
+        logger.exception("Error encountered handling message")
 
 
-options_parser = TCPOptionsParser()
-
-
-class BaseTCPEncodingComponent:
+class BaseIOEncodingComponent:
 
     def __init__(self, args, options):
         """
         :param args: command line arguments (sys.argv) or valid options as a list
         """
-
         self.options,args = options_parser.parse(args, validate=True)
+        if self.options.debug:
+            logging.basicConfig(format=FORMAT, level=logging.DEBUG, filename="debug-%d.log" % int(time.time()))
 
     def message_handlers(self, handler_function):
         component_type = self.__class__.component_type
 
         return {
                 'LF': DefaultMessageHandler(handler_function, component_type, self.options.char_encoding),
-                'CRLF': CrlfHandler(handler_function, component_type),
+                'CRLF': CrlfHandler(handler_function, component_type, self.options.char_encoding),
                 'STXETX': StxEtxHandler(handler_function, component_type),
                 'L4': HeaderLengthHandler(4, handler_function, component_type),
                 'L2': HeaderLengthHandler(2, handler_function, component_type),
                 'L1': HeaderLengthHandler(1, handler_function, component_type)}
 
 
-class Processor(BaseTCPEncodingComponent, BaseStreamComponent):
+class Processor(BaseIOEncodingComponent, BaseStreamComponent):
     """Stream Processor - receives and sends messages."""
     component_type = StreamComponent.PROCESSOR
 
@@ -146,11 +152,11 @@ class Processor(BaseTCPEncodingComponent, BaseStreamComponent):
         :param args: arguments containing options
         :param options: parsed options if not None, args will be ignored
         """
-        BaseTCPEncodingComponent.__init__(self, args, options)
+        BaseIOEncodingComponent.__init__(self, args, options)
         BaseStreamComponent.__init__(self, launch_server, self.message_handlers(handler_function), self.options)
 
 
-class Sink(BaseTCPEncodingComponent, BaseStreamComponent):
+class Sink(BaseIOEncodingComponent, BaseStreamComponent):
     """Stream Sink - recieves messages only"""
     component_type = StreamComponent.SINK
 
@@ -160,11 +166,11 @@ class Sink(BaseTCPEncodingComponent, BaseStreamComponent):
         :param args: arguments containing options
         :param options: parsed options if not None, args will be ignored
         """
-        BaseTCPEncodingComponent.__init__(self, args, options)
+        BaseIOEncodingComponent.__init__(self, args, options)
         BaseStreamComponent.__init__(self, launch_server, self.message_handlers(handler_function), self.options)
 
 
-class Source(BaseTCPEncodingComponent, BaseStreamComponent):
+class Source(BaseIOEncodingComponent, BaseStreamComponent):
     """Stream Source - sends messages from an external source """
     component_type = StreamComponent.SOURCE
 
@@ -174,5 +180,5 @@ class Source(BaseTCPEncodingComponent, BaseStreamComponent):
         :param args: arguments containing options
         :param options: parsed options if not None, args will be ignored
         """
-        BaseTCPEncodingComponent.__init__(self, args, options)
+        BaseIOEncodingComponent.__init__(self, args, options)
         BaseStreamComponent.__init__(self, launch_server, self.message_handlers(handler_function), self.options)

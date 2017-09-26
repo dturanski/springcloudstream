@@ -24,7 +24,7 @@ Implementations of MessageHandler used by stream components.
 
 import struct
 from array import array
-from springcloudstream.component import StreamComponent
+from springcloudstream.component import StreamComponent, MessageHandler
 
 
 def rindex(iterable, value):
@@ -53,30 +53,18 @@ def split_array(lst, val):
     return splits
 
 
-class MessageHandler:
-    """
-    Base Message Handler.
-    Called by StreamHandler to encode/decode socket message and invoke the handler_function.
-    """
-
-    def __init__(self, handler_function, component_type, char_encoding='utf-8'):
-        """
-        :param handler_function: the handler function to execute for each message.
-        """
-        self.handler_function = handler_function
-        self.char_encoding = char_encoding
-        if not component_type in StreamComponent.components:
-            raise NotImplementedError("component type %s is not implemented" % component_type)
-
-        self.component_type = component_type
-
-
 class DefaultMessageHandler(MessageHandler):
     """
     Default Message Handler for str terminated by LF ('\n')
     """
 
     def __init__(self, handler_function, component_type, char_encoding='utf-8'):
+        """
+        :param handler_function: the handler function to execute for each message
+        :param component_type: Processor, Sink, or Source
+        :param char_encoding: the character encoding to use (default is 'utf-8')
+        """
+
         MessageHandler.__init__(self, handler_function, component_type, char_encoding)
         self.TERMINATOR = '\n'
 
@@ -167,7 +155,7 @@ class StxEtxHandler(MessageHandler):
         else:
             arr = array('B',data)
             for message in split_array(arr,StxEtxHandler.ETX):
-                if (message[0] == StxEtxHandler.STX):
+                if message[0] == StxEtxHandler.STX:
                     message = message[1:]
                 logger.debug(message)
                 result = self.handler_function(bytearray(message))
@@ -224,6 +212,11 @@ class CrlfHandler(DefaultMessageHandler):
     """
 
     def __init__(self, handler_function, component_type, char_encoding='utf-8'):
+        """
+        :param handler_function: the handler function to execute for each message
+        :param component_type: Processor, Sink, or Source
+        :param char_encoding: the character encoding to use (default is 'utf-8')
+        """
         DefaultMessageHandler.__init__(self, handler_function, component_type, char_encoding)
         self.TERMINATOR = '\r\n'
 
@@ -241,6 +234,7 @@ class HeaderLengthHandler(MessageHandler):
         """
         :param header_size: the size of the message length header in bytes (1,2, or 4)
         :param handler_function: the handler function to execute for each message
+        :param component_type: Processor, Sink, or Source
         """
         MessageHandler.__init__(self, handler_function, component_type)
         if not header_size in (1, 2, 4):

@@ -18,11 +18,12 @@ import random
 import string
 import unittest
 import struct
-from tests.tcptest.testutils import TcpTestCase
+from tests.tcptest.base import TcpTestCase
 
 
 def random_data(size):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(size))
+
 
 class BaseTestCases:
     class TestTcpUpperBase(TcpTestCase):
@@ -38,11 +39,12 @@ class BaseTestCases:
                 sock.close()
 
         def test_random_data(self):
-            header_len = self.__class__.HEADER_LEN
+            header_len = self.HEADER_LEN
 
             SZ1, SZ2, SZ3 = 10, 1025, 2051
-            if (header_len == 1):
-                SZ1, SZ2, SZ3 = 10, 81, 127
+
+            if header_len == 1:
+                SZ1, SZ2, SZ3 = 10, 81, 255
 
             try:
                 sock = self.create_socket()
@@ -56,8 +58,8 @@ class BaseTestCases:
                 sock.close()
 
         def sendAndRecieve(self, sock, data):
-            header_len = self.__class__.HEADER_LEN
-            format = self.__class__.FORMAT
+            header_len = self.HEADER_LEN
+            format = self.FORMAT
             ba = bytearray(struct.pack(format, len(data)))
             ba.extend(data.encode('utf-8'))
 
@@ -86,7 +88,7 @@ class TestTcpL4(BaseTestCases.TestTcpUpperBase):
 
 class TestTcpL1(BaseTestCases.TestTcpUpperBase):
     SERVER_NAME = 'tcp_upper_hl1.py'
-    FORMAT = 'b'
+    FORMAT = 'B'
     HEADER_LEN = 1
 
 

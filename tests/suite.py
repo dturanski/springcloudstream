@@ -19,6 +19,8 @@ import os
 
 sys.path.insert(0, os.path.abspath('.'))
 
+import tests.tcptest.suite
+import tests.grpctest.suite
 test_loader = unittest.defaultTestLoader
 test_suite = test_loader.discover('.')
 runner=unittest.TextTestRunner()

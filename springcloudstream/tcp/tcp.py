@@ -25,12 +25,12 @@ import sys
 import logging
 import threading
 import os
-import socket
+
+from springcloudstream.portability import PYTHON3
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
-PYTHON3 = sys.version_info >= (3, 0)
 
 if PYTHON3:
     from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
@@ -54,7 +54,7 @@ def launch_server(message_handler, options):
         logger.setLevel(logging.DEBUG)
 
     if not options.monitor_port:
-        logger.warn(
+        logger.warning(
             "Monitoring not enabled. No monitor-port option defined.")
     else:
         threading.Thread(target=launch_monitor_server, args=(options.host, options.monitor_port, logger)).start()
@@ -106,7 +106,9 @@ class StreamHandler(BaseRequestHandler):
         cls.BUFFER_SIZE = buffer_size
         cls.message_handler = message_handler
         cls.logger = logger
-        cls.message_handler.logger = logger
+
+        cls.message_handler.logger = logging.getLogger(message_handler.__class__.__name__)
+        cls.message_handler.logger.setLevel(logger.level)
         return cls
 
     def handle(self):

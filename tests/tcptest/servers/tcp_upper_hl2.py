@@ -25,6 +25,6 @@ def upper(data):
 
 args =['--port','9999',
        '--monitor-port','9998',
-       '--debug','True',
+       '--debug',
        '--encoder','L2']
 Processor(upper, args).start()

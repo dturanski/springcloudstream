@@ -14,7 +14,6 @@ Copyright 2017 the original author or authors.
    limitations under the License.
 """
 
-import socket
 import sys
 import os
 import unittest
@@ -25,23 +24,32 @@ import time
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
 
-HOST, PORT = socket.gethostname(), 9999
-
 PYTHON3 = sys.version_info >= (3, 0)
 
-PY_COMMAND = 'python'
 if PYTHON3:
     PY_COMMAND = 'python3'
 
+if PYTHON3:
+    def getc(proc):
+        c, = proc.stdout.read(1)
+        return c
+else:
+    PY_COMMAND = 'python'
 
-class TcpTestCase(unittest.TestCase):
+
+    def getc(proc):
+        c = proc.stdout.read(1)
+        return ord(c)
+
+
+class IOTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         SERVER = '%s/%s' % (cls.servers_root(), cls.SERVER_NAME)
 
         cls.process = subprocess.Popen(
-            '%s %s' % (PY_COMMAND, SERVER),
-            shell=True, preexec_fn=os.setsid
+            '%s -u %s' % (PY_COMMAND, SERVER),
+            shell=True, preexec_fn=os.setsid, stdout=subprocess.PIPE, stdin=subprocess.PIPE
         )
         time.sleep(1.0)
 
@@ -54,16 +62,4 @@ class TcpTestCase(unittest.TestCase):
 
     @classmethod
     def servers_root(cls):
-        if os.getcwd().endswith('springcloudstream'):
-            return '%s/tests/tcptest/servers' % os.getcwd()
-        elif os.getcwd().endswith('tcptest'):
-            return '%s/servers' % os.getcwd()
-        elif os.getcwd().endswith("tests"):
-            return '%s/tcptest/servers' % os.getcwd()
-
-    def create_socket(self,host=HOST, port=PORT, **kwargs):
-        # Create a socket (SOCK_STREAM means a TCP socket)
-        print(host)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
-        return sock
+        return '%s/servers' % os.path.dirname(__file__)

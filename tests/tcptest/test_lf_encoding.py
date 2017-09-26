@@ -18,7 +18,7 @@ import random
 import string
 import unittest
 
-from tests.tcptest.testutils import TcpTestCase
+from tests.tcptest.base import TcpTestCase
 
 
 def random_data(size):
@@ -48,7 +48,7 @@ class TestTcp(TcpTestCase):
         finally:
             sock.close()
 
-    def test_multi_data(self):
+    def test_multi_line(self):
         try:
             sock = self.create_socket()
             sock.sendall("hello\nworld\n".encode('utf-8'))

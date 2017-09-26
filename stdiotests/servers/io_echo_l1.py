@@ -15,23 +15,15 @@ Copyright 2017 the original author or authors.
 '''
 __author__ = 'David Turanski'
 
-import struct
+
 import os,sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))
+from springcloudstream.stdio.stream import Processor
 
 
-from springcloudstream.tcp.stream import Processor
+def echo(data):
+    return data
 
 
-def multiply(data):
-    vals = struct.unpack('!if',data)
-    return struct.pack('f',vals[0]*vals[1])
-
-args =['--port','9999',
-       '--monitor-port','9998',
-       '--debug',
-       '--encoder','STXETX'
-       ]
-
-Processor(multiply,args).start()
+Processor(echo,['--encoder','L1']).start()

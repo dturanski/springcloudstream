@@ -15,23 +15,23 @@ Copyright 2017 the original author or authors.
 '''
 __author__ = 'David Turanski'
 
-import struct
-import os,sys
-sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('.'))
+import optparse
+class OptionsParser:
+    """
+    Encapsulates on OptionParser to handle command line options.
+    """
+    def __init__(self):
+        self.parser = optparse.OptionParser()
+        self.parser.usage = "%prog [options] --help for help"
 
+    def add_option(self,*args, **kwargs):
+        return self.parser.add_option(*args, **kwargs)
 
-from springcloudstream.tcp.stream import Processor
+    def parse(self,args,validate=False):
+        opts,args =  self.parser.parse_args(args)
+        validate and self.validate(opts)
+        return opts,args
 
+    def validate(self,options):
+        pass
 
-def multiply(data):
-    vals = struct.unpack('!if',data)
-    return struct.pack('f',vals[0]*vals[1])
-
-args =['--port','9999',
-       '--monitor-port','9998',
-       '--debug',
-       '--encoder','STXETX'
-       ]
-
-Processor(multiply,args).start()

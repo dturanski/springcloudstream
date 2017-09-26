@@ -26,8 +26,23 @@ if PYTHON3:
     getfullargspec = inspect.getfullargspec
     def __is_str_type__(val):
         return isinstance(val,str)
+
+    input = sys.stdin.buffer
+
+    # nosetests reassigns sys.stdout and breaks without this check
+    output =  sys.stdout if sys.stdout.__class__.__name__ == 'StringIO' else sys.stdout.buffer
 else:
     long = long
     getfullargspec = inspect.getargspec
     def __is_str_type__(val):
         return isinstance(val, basestring)
+
+    # Python 2 on Windows opens sys.stdin in text mode, and
+    # binary data that read from it becomes corrupted on \r\n
+    #if sys.platform == "win32":
+    #    # set sys.stdin to binary mode
+    #    import os, msvcrt
+    #    msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+    input = sys.stdin
+    output = sys.stdout
+
