@@ -31,9 +31,6 @@ class StdioOptionsParser(OptionsParser):
     Encapsulates on OptionParser to handle options for BaseStreamComponent. Supported options include:
 
     -h, --help            show this help message and exit
-
-    -s BUFFER_SIZE, --buffer-size=BUFFER_SIZE (optional, default is 2048)
-                        the tcp buffer size
     -d, --debug           turn on debug logging
     -c CHAR_ENCODING, --char-encoding=CHAR_ENCODING (optional, default is 'utf-8')
                         character encoding
@@ -43,12 +40,6 @@ class StdioOptionsParser(OptionsParser):
 
     def __init__(self):
         OptionsParser.__init__(self)
-
-       # self.add_option('-s', '--buffer-size',
-       #                 help='the tcp buffer size',
-       #                 type='int',
-       #                 default=2048,
-       #                 dest='buffer_size')
 
         self.add_option('-c', '--char-encoding',
                         help='character encoding',
@@ -72,8 +63,6 @@ class StdioOptionsParser(OptionsParser):
         """
         Validate the options or exit()
         """
-        #if options.buffer_size <= 0:
-        #    self.parser.error("'buffer_size' must be > 0.")
         try:
             codecs.getencoder(options.char_encoding)
         except LookupError:
